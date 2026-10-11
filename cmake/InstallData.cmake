@@ -1,3 +1,7 @@
+# XR Vessel add-ons for OpenOrbiter Space Flight Simulator - Linux port
+# Copyright (C) 2026 racerx2; based on the XR vessels, Copyright (C) 2006-2025 Douglas Beachy
+# Licensed under the GNU General Public License version 3 or any later version (see LICENSE)
+
 # not upstream: copies the XR data into the Orbiter folder; a file that already exists is kept (user edits, XR2 package files)
 set(dst "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}")
 file(GLOB_RECURSE files RELATIVE "${XR_SRC}/Orbiter" "${XR_SRC}/Orbiter/*")

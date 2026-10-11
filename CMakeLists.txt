@@ -1,3 +1,7 @@
+# XR Vessel add-ons for OpenOrbiter Space Flight Simulator - Linux port
+# Copyright (C) 2026 racerx2; based on the XR vessels, Copyright (C) 2006-2025 Douglas Beachy
+# Licensed under the GNU General Public License version 3 or any later version (see LICENSE)
+
 # not upstream: Linux build of the XR vessels (XR1, XR2, XR5) for the native Linux Orbiter
 cmake_minimum_required(VERSION 3.19)
 project(XRVessels LANGUAGES CXX)

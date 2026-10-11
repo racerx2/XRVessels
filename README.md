@@ -99,3 +99,16 @@ Build and install into an Orbiter folder (needs CMake, Ninja, GCC 15, Qt 6):
     cmake --install out/build
 
 `ORBITER_CMAKE_DIR` is the folder holding Orbiter's `rcresources.cmake` and `rc2cpp.py` (an installed Orbiter has them in its `cmake` folder, the default). Install copies the modules to `Modules/` and the XR1/XR5 data from `Orbiter/`; files already in the Orbiter folder are never overwritten. The XR2's mesh and textures are not part of this repository: install them from the official XR2 Ravenstar package.
+
+### Credits
+
+From the XR Flight Operations Manual (`XRVessels/XR Flight Operations Manual.pdf`, which has the full credits and licence notices):
+
+- **XR vessels (all)**: Douglas Beachy: concept, systems design, C++ code, 2D graphics, dialogs, documentation.
+- **DG-XR1**: Don Gallagher (3D mesh tweaks, hover doors, SCRAM doors). Based on the DeltaGlider-S mesh and virtual cockpit by Frying Tiger, and on Martin Schweiger's DeltaGlider sample vessel (MIT licence).
+- **XR5 Vanguard**: Russell Hicks (3D modeling, internal cockpit textures, model design, cargo module models, some animation code), PennyBlack (ship textures), Carmen A (fuel, LOX and H2O cargo modules), Tom Fisher (AIA cargo module), Don Gallagher (early prototype meshes).
+- **XR2 Ravenstar**: Steve "Coolhand" Tyler (concept, model design, 3D modeling, textures, cargo module models, Lee and Kara astronaut models, turbopack models, custom main/hover/RCS/SCRAM sound effects).
+- **Voice callouts (all vessels)**: Sally Beaumont.
+- **Astronaut meshes**: Greg Burch.
+- **Orbiter**: Dr. Martin Schweiger.
+- **Linux port**: racerx2.
