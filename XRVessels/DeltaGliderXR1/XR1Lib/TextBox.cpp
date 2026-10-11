@@ -27,8 +27,10 @@
 // Draw text in a Windows area; supports newlines via & values.
 // ==============================================================
 
+#include "XRGdi.h"  // not upstream: COLORREF, QPainter and the GDI calls TextBox.h and this file use (windows.h before)
 #include "TextBox.h"
 #include "DeltaGliderXR1.h"
+#include <algorithm>  // not upstream: std::min
 
 // base class for all TextBox objects
 // screenLineCount = # of text lines on the screen
@@ -45,7 +47,7 @@ TextBox::TextBox(int width, int height, COLORREF normalTextColor, COLORREF highl
 // lineSpacing = # of pixels between screen lines
 // startingLineNumber = starting line # in buffer, 1-based; if <= 0, renders full screen starting from bottom
 // Returns: true if text re-rendered, false if text is unchanged since last render
-bool TextBox::Render(HDC hDC, int topY, HFONT font, int lineSpacing, bool forceRender, int startingLineNumber)
+bool TextBox::Render(QPainter *hDC, int topY, QFont *font, int lineSpacing, bool forceRender, int startingLineNumber)  // HDC/HFONT counterparts
 {
     bool retVal = false;        // assume NOT re-rendered
 
@@ -57,7 +59,7 @@ bool TextBox::Render(HDC hDC, int topY, HFONT font, int lineSpacing, bool forceR
         // text has changed; must re-render this box
         retVal = true;        
 
-        HFONT prevFont = (HFONT)SelectObject(hDC, font);   // save previous font and select new font
+        QFont *prevFont = (QFont *)SelectObject(hDC, font);   // save previous font and select new font; HFONT counterpart
         if (m_bgColor == CWHITE)
         {
             SetBkMode(hDC, TRANSPARENT);
@@ -91,7 +93,7 @@ bool TextBox::Render(HDC hDC, int topY, HFONT font, int lineSpacing, bool forceR
 
         // loop thorough lines in vector, which has 0-based index
         const int startingLineIndex = startingLineNumber-1;     // 0-based
-        const int endingLineIndex = min(startingLineIndex + m_screenLineCount, bufferLineCount);   // EXCLUSIVE
+        const int endingLineIndex = std::min(startingLineIndex + m_screenLineCount, bufferLineCount);   // EXCLUSIVE; std::min for the windows.h macro
         for (int i = startingLineIndex; i < endingLineIndex; i++)
         {
             const TextLine &line = m_textLineGroup.GetLine(i);

@@ -37,10 +37,21 @@
 #include "DlgCtrl.h"
 #include "XRPayload.h"
 #include "XRPayloadBaySlot.h"
+#include "OrbiterResource.h"  // not upstream: Qt dialog helpers (DlgItem, oapiConnectDlgCommands)
+#include <QComboBox>          // not upstream: Qt dialog controls
+#include <QAbstractButton>
+#include <QLabel>
+#include <QPixmap>
+#include <QFont>
+#include <QTimer>
+#include <cassert>
+#include <cstring>
+#include <string>
+#include <algorithm>
 
 // static font handles
-HFONT XR1PayloadDialog::s_hOrgFont;      // normal button font handle
-HFONT XR1PayloadDialog::s_hBoldFont;     // bold button font handle
+QFont *XR1PayloadDialog::s_hOrgFont;      // normal button font handle
+QFont *XR1PayloadDialog::s_hBoldFont;     // bold button font handle
 
 // Invoked at initialization time when the user clicks our "payload" button; instantiates a 
 // new XR1PayloadDialog instance and dispatches messages.  Returns when dialog is closed.
@@ -52,40 +63,50 @@ void XR1PayloadDialog::EditorFunc(OBJHANDLE hVessel)
 
 // method invoked by the Vanguard to open a new instance
 // Returns: handle to new dialog
-HWND XR1PayloadDialog::Launch(OBJHANDLE hVessel)
+QWidget *XR1PayloadDialog::Launch(OBJHANDLE hVessel)
 {
     DeltaGliderXR1 *pXR1 = static_cast<DeltaGliderXR1 *>(oapiGetVesselInterface(hVessel));
-    HWND hDlg = oapiOpenDialogEx(g_hDLL, GLOBAL_IDD_PAYLOAD_EDITOR, Proc, DLG_CAPTIONCLOSE, pXR1);
+    QWidget *hDlg = oapiOpenDialogEx(g_hDLL, GLOBAL_IDD_PAYLOAD_EDITOR, Proc, DLG_CAPTIONCLOSE, pXR1);
 
     return hDlg;
+}
+
+// WM_TERMINATE counterpart: the vessel wants us to close; pRequestingXR1 = DeltaGliderXR1 * requesting the close
+void XR1PayloadDialog::Terminate(QWidget *hDlg, DeltaGliderXR1 *pRequestingXR1)
+{
+    if (hDlg == nullptr)   // not upstream: SendMessage to a null window did nothing
+        return;
+    CloseDialog(hDlg);
 }
 
 #define TIMERID_REFRESH_MASS 1
 #define TIMERID_REFRESH_BAY  2
 
-// message proc that handles all our Windows messages
-// Returns: TRUE if message handled, FALSE if message not handled; i.e., the next window in the chain should handle it
-INT_PTR CALLBACK XR1PayloadDialog::Proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+// SetTimer counterpart: a QTimer child of the dialog, named after its timer ID; timerFunc is always nullptr (WM_TIMER)
+void XR1PayloadDialog::SetTimer(QWidget *hDlg, const int timerID, const int elapse, void *timerFunc)
 {
-    // handle bay slot buttons here via a for loop since there are an unknown number of them
-    if (uMsg == WM_COMMAND)
-    {
-        const WORD loWord = LOWORD (wParam);    // get resource ID of button that was clicked
-        for (int i=0; i < slotCount; i++)
-        {
-            if (loWord == slotResourceIDs[i])
-            {
-                const WORD notificationMsg = HIWORD(wParam);    // e.g., BN_CLICKED
-                bool wasProcessed = ProcessSlotButtonMsg(hDlg, i+1, (HWND)lParam, notificationMsg);  // slots are one-based
-                if (wasProcessed)
-                    return TRUE;
-                // else fall through to oapiDefDialogProc
-            }
-        }
-    }
+    assert(timerFunc == nullptr);
+    KillTimer(hDlg, timerID);   // SetTimer with an existing ID replaces that timer
+    QTimer *pTimer = new QTimer(hDlg);
+    pTimer->setObjectName(QString("XRTimer%1").arg(timerID));
+    QObject::connect(pTimer, &QTimer::timeout, hDlg, [hDlg, timerID]() { TimerProc(hDlg, timerID); });
+    pTimer->start(elapse);
+}
 
-    switch (uMsg) 
+// KillTimer counterpart
+void XR1PayloadDialog::KillTimer(QWidget *hDlg, const int timerID)
+{
+    QTimer *pTimer = hDlg->findChild<QTimer *>(QString("XRTimer%1").arg(timerID), Qt::FindDirectChildrenOnly);
+    if (pTimer != nullptr)
     {
+        pTimer->stop();
+        pTimer->deleteLater();
+    }
+}
+
+// DLGINIT that replaces the Windows message proc: runs the WM_INITDIALOG body and connects the WM_COMMAND handler
+void XR1PayloadDialog::Proc(QWidget *hDlg, void *context)
+{
     /* Note: for some reason Orbiter appears to be trapping keystrokes, so this will not work.
     case WM_KEYDOWN:
         if (wParam == VK_ESCAPE)
@@ -93,28 +114,31 @@ INT_PTR CALLBACK XR1PayloadDialog::Proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
         break;  // pass it on
     */
 
-	case WM_INITDIALOG:
+	// WM_INITDIALOG
         {
             // pointer to vessel instance was passed as dialog context
-            DeltaGliderXR1 &xr1 = *reinterpret_cast<DeltaGliderXR1 *>(lParam);
+            DeltaGliderXR1 &xr1 = *reinterpret_cast<DeltaGliderXR1 *>(context);
 
             // Then walk through list of all vessels in the Orbiter config directory and 
             // add each XRPayload object to our payload combo box.
-            HWND hListBox = ::GetDlgItem(hDlg, IDC_COMBO_SELECTED_PAYLOAD_OBJECT);
+            QComboBox *hListBox = DlgItem<QComboBox>(hDlg, IDC_COMBO_SELECTED_PAYLOAD_OBJECT);
             const XRPayloadClassData **ppAllPayloadClasses = XRPayloadClassData::GetAllAvailableXRPayloads();  // this is a static global array that should not be freed by us
             for (const XRPayloadClassData **ppClassData = ppAllPayloadClasses; *ppClassData != nullptr; ppClassData++)
             {
                 const char *pClassname = (*ppClassData)->GetClassname();
-                ::SendMessage(hListBox, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(pClassname));
+                oapiComboAddString(hListBox, pClassname);   // CB_ADDSTRING counterpart (CBS_SORT honoured)
             }
 
             // now select the first one in the list
             // NOTE: it is possible that the list is empty, although that would only happen if the user deliberately deleted the sample payload container(s) 
             // installed with the Vanguard.
-            ::SendMessage(hListBox, CB_SETCURSEL, 0, 0);    // index 0
+            hListBox->setCurrentIndex(0);    // index 0; CB_SETCURSEL counterpart
 
             // set initial focus to our combo-box
-            SetFocus(hListBox);
+            hListBox->setFocus();
+
+            // WM_SETFOCUS counterpart: focus given to the dialog goes to our selected payload combo-box
+            hDlg->setFocusProxy(hListBox);
 
             // scan the payload bay and update the slot button states and the ship's mass fields
             RescanBayAndUpdateButtonStates(hDlg, &xr1);  // must pass in the XR1 ptr here
@@ -126,54 +150,53 @@ INT_PTR CALLBACK XR1PayloadDialog::Proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             // Create a time for 1/5th-second so we can refresh the bay contents automatically in case 
             // the user deploys or adds cargo via the ship's controls.
             SetTimer(hDlg, TIMERID_REFRESH_BAY, 200, nullptr);
-
-            return FALSE;  // we already set the focus 
         }  // case WM_INITDIALOG
 
-    case WM_TIMER:
-        switch (wParam)
+	// WM_COMMAND
+    oapiConnectDlgCommands(hDlg, [hDlg](int id, int code, QWidget *hCtrl)
+    {
+        // handle bay slot buttons here via a for loop since there are an unknown number of them
+        const int loWord = id;    // get resource ID of button that was clicked
+        for (int i=0; i < slotCount; i++)
         {
-        case TIMERID_REFRESH_MASS:     // refresh the mass readout values
-            UpdateMassValues(hDlg, GetXR1(hDlg));
-            return 0;
-
-        case TIMERID_REFRESH_BAY:     // refresh the bay contents
-            RescanBayAndUpdateButtonStates(hDlg, &GetXR1(hDlg));
-            return 0;
-            
-        // no default case
+            if (loWord == slotResourceIDs[i])
+            {
+                const WORD notificationMsg = static_cast<WORD>(code);    // e.g., RESN_CLICKED
+                bool wasProcessed = ProcessSlotButtonMsg(hDlg, i+1, hCtrl, notificationMsg);  // slots are one-based
+                if (wasProcessed)
+                    return;
+                // else fall through to the switch below
+            }
         }
-        break;
 
-	case WM_COMMAND:
-		switch (LOWORD (wParam)) 
+		switch (id) 
         {
         case IDC_COMBO_SELECTED_PAYLOAD_OBJECT:
             {
-                if (HIWORD(wParam) == CBN_SELENDOK)   
+                if (code == RESN_SELCHANGE)   // CBN_SELENDOK counterpart
                 {
                     // value in combo box changed: read the selected classname and populate the payload values for it
                     ProcessSelectedPayloadChanged(hDlg);
                 }
-                return TRUE;
+                return;
             }
 
         case IDC_BACK:
 		case IDCANCEL:
             // WARNING: do not invoke GetXR1() here!  Orbiter has cleared the context pointer at this point!
             CloseDialog(hDlg);
-			return TRUE;
+			return;
 
 		case IDHELP:
 			// TODO: add help
-			return FALSE;
+			return;
 
         case IDC_EMPTY_BAY:
             // remove all payload in the bay
             GetXR1(hDlg).m_pPayloadBay->DeleteAllAttachedPayloadVessels();
             RescanBayAndUpdateButtonStates(hDlg);
             GetXR1(hDlg).PlaySound(GetXR1(hDlg).SwitchOff, DeltaGliderXR1::ST_Other, MED_CLICK);  // medium click 
-            return TRUE;
+            return;
 
         case IDC_FILL_PAYLOAD_BAY:
             {
@@ -189,7 +212,7 @@ INT_PTR CALLBACK XR1PayloadDialog::Proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     RescanBayAndUpdateButtonStates(hDlg);   // update the button enabled/disabled pushed/unpushed states based on the new payload in the bay
                 }
                 GetXR1(hDlg).PlaySound(GetXR1(hDlg).SwitchOn, DeltaGliderXR1::ST_Other, MED_CLICK);  // medium click 
-                return TRUE;
+                return;
             }
 
         case IDC_SELECTED_REMOVE_ALL:
@@ -205,34 +228,39 @@ INT_PTR CALLBACK XR1PayloadDialog::Proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     RescanBayAndUpdateButtonStates(hDlg);   // update the button enabled/disabled pushed/unpushed states based on the new payload in the bay
                 }
                 GetXR1(hDlg).PlaySound(GetXR1(hDlg).SwitchOff, DeltaGliderXR1::ST_Other, MED_CLICK);  // medium click 
-                return TRUE;
+                return;
             }
 
 		}  // case WM_COMMAND
-		break;
+    });
 
+    // WM_CLOSE counterpart: the dialog is destroyed without CloseDialog
+    QObject::connect(hDlg, &QObject::destroyed, [hDlg]()
+    {
+         if (DeltaGliderXR1::s_hPayloadEditorDialog == hDlg)
+             DeltaGliderXR1::s_hPayloadEditorDialog = 0;   // in case the sim is closing
+    });
+}
 
-    case WM_SETFOCUS:
+// WM_TIMER counterpart
+void XR1PayloadDialog::TimerProc(QWidget *hDlg, const int timerID)
+{
+        switch (timerID)
         {
-            // we just received the input focus; set focus to our selected payload combo-box
-            HWND hListBox = ::GetDlgItem(hDlg, IDC_COMBO_SELECTED_PAYLOAD_OBJECT);
-            SetFocus(hListBox);
-            return TRUE;
+        case TIMERID_REFRESH_MASS:     // refresh the mass readout values
+            UpdateMassValues(hDlg, GetXR1(hDlg));
+            return;
+
+        case TIMERID_REFRESH_BAY:     // refresh the bay contents
+            RescanBayAndUpdateButtonStates(hDlg, &GetXR1(hDlg));
+            return;
+            
+        // no default case
         }
-
-    case WM_TERMINATE:     // our custom message: Vanguard pilot wants us to close
-        CloseDialog(hDlg);
-        return TRUE;
-
-    case WM_CLOSE:
-         DeltaGliderXR1::s_hPayloadEditorDialog = 0;   // in case the sim is closing
-         break;  // fall through to oapiDefDialogProc
-	}
-	return oapiDefDialogProc(hDlg, uMsg, wParam, lParam);
 }
 
 // close this dialog
-void XR1PayloadDialog::CloseDialog(HWND hDlg)
+void XR1PayloadDialog::CloseDialog(QWidget *hDlg)
 {
     // WARNING: do not invoke GetXR1() in this method!  Orbiter may have cleared the context pointer at this point!
 
@@ -242,8 +270,8 @@ void XR1PayloadDialog::CloseDialog(HWND hDlg)
 
     if (s_hOrgFont != nullptr)
     {
-        DeleteObject(s_hOrgFont);
-        DeleteObject(s_hBoldFont);
+        delete s_hOrgFont;    // DeleteObject counterpart
+        delete s_hBoldFont;
         s_hOrgFont = s_hBoldFont = nullptr;  // reset for when the next dialog is instantiated
     }
 
@@ -254,65 +282,71 @@ void XR1PayloadDialog::CloseDialog(HWND hDlg)
 }
 
 // Update the payload fields on the dialog using the supplied vessel classname
-void XR1PayloadDialog::UpdatePayloadFields(HWND hDlg, const char *pClassname)
+void XR1PayloadDialog::UpdatePayloadFields(QWidget *hDlg, const char *pClassname)
 {
     char msg[80];  // reused
 
     const XRPayloadClassData &pd = XRPayloadClassData::GetXRPayloadClassDataForClassname(pClassname);
 
     // description
-    SetDlgItemText(hDlg, IDC_STATIC_DESCRIPTION, pd.GetDescription());
+    oapiSetDlgItemText(hDlg, IDC_STATIC_DESCRIPTION, pd.GetDescription());  // SetDlgItemText counterpart
     
     // mass
     sprintf(msg, "%.3f", pd.GetMass());
-    SetDlgItemText(hDlg, IDC_STATIC_MASS, msg);
+    oapiSetDlgItemText(hDlg, IDC_STATIC_MASS, msg);
 
     // dimensions
     VECTOR3 dim = pd.GetDimensions();
     sprintf(msg, "%.2f L x %.2f W x %.2f H", dim.z, dim.x, dim.y); 
-    SetDlgItemText(hDlg, IDC_STATIC_DIMENSIONS, msg);
+    oapiSetDlgItemText(hDlg, IDC_STATIC_DIMENSIONS, msg);
 
     // slots occupied
-    VECTOR3 slots = pd.GetSlotsOccupied();  
-    sprintf(msg, "%.1f L x %.1f W x %.1f H", slots.z, slots.x, slots.y); 
-    SetDlgItemText(hDlg, IDC_STATIC_SLOTS_OCCUPIED, msg);
+    VECTOR3 slotsOcc = pd.GetSlotsOccupied();  // renamed from "slots": a Qt keyword macro
+    sprintf(msg, "%.1f L x %.1f W x %.1f H", slotsOcc.z, slotsOcc.x, slotsOcc.y); 
+    oapiSetDlgItemText(hDlg, IDC_STATIC_SLOTS_OCCUPIED, msg);
 
     // show the bitmap preview, if any (may be null)
-    const HBITMAP hBmp = pd.GetThumbnailBitmapHandle();
-    HWND hPictureCtrl = ::GetDlgItem(hDlg, IDC_STATIC_THUMBNAIL_BMP);
-    ::SendMessage(hPictureCtrl, STM_SETIMAGE, IMAGE_BITMAP, reinterpret_cast<LPARAM>(hBmp));   // TODO: figure out what a nullptr hBmp here does to the image; is it blank?
+    QImage *const hBmp = pd.GetThumbnailBitmapHandle();
+    QLabel *hPictureCtrl = DlgItem<QLabel>(hDlg, IDC_STATIC_THUMBNAIL_BMP);
+    if (hBmp != nullptr)   // STM_SETIMAGE counterpart
+    {
+        hPictureCtrl->setPixmap(QPixmap::fromImage(*hBmp));
+        hPictureCtrl->adjustSize();   // an SS_BITMAP static sizes itself to its bitmap
+    }
+    else
+        hPictureCtrl->clear();        // a null bitmap leaves the static blank
 }
 
 // Refresh vessel and payload mass readouts
-void XR1PayloadDialog::UpdateMassValues(HWND hDlg, const DeltaGliderXR1 &xr1)
+void XR1PayloadDialog::UpdateMassValues(QWidget *hDlg, const DeltaGliderXR1 &xr1)
 {
     const double vesselMass = xr1.GetMass();
     const double payloadMass = xr1.GetPayloadMass();
 
     char msg[40];
     sprintf(msg, "%10.1f kg (%10.1lf lb)", payloadMass, payloadMass * 2.20462262);
-    SetDlgItemText(hDlg, IDC_STATIC_PAYLOAD_MASS, msg);
+    oapiSetDlgItemText(hDlg, IDC_STATIC_PAYLOAD_MASS, msg);  // SetDlgItemText counterpart
 
     sprintf(msg, "%10.1f kg (%10.1lf lb)", vesselMass, vesselMass * 2.20462262);
-    SetDlgItemText(hDlg, IDC_STATIC_VESSEL_MASS, msg);
+    oapiSetDlgItemText(hDlg, IDC_STATIC_VESSEL_MASS, msg);
 }
 
 // Process a payload button click message
 // hDlg = main dialog window handle
 // slotNumber = 1...36
 // hButton = handle of button that was checked or unchecked
-// notificationMsg = button window message ID; e.g., BN_CLICKED
+// notificationMsg = button notification code; e.g., RESN_CLICKED
 // Returns: true if message processed, false if message not processed
-bool XR1PayloadDialog::ProcessSlotButtonMsg(HWND hDlg, const int slotNumber, const HWND hButton, const WORD notificationMsg)
+bool XR1PayloadDialog::ProcessSlotButtonMsg(QWidget *hDlg, const int slotNumber, QWidget *const hButton, const WORD notificationMsg)
 {
     bool retVal = false;
 
     // Note: disabled checkboxes (like buttons) do not send BN_CLICKED notifications
-    if (notificationMsg == BN_CLICKED)
+    if (notificationMsg == RESN_CLICKED)   // BN_CLICKED counterpart
     {
         // retrieve the state of this button
-        LRESULT buttonState = ::SendMessage(hButton, BM_GETCHECK, 0, 0);
-        if (buttonState == BST_CHECKED)
+        const bool buttonState = qobject_cast<QAbstractButton *>(hButton)->isChecked();   // BM_GETCHECK counterpart
+        if (buttonState)
         {
             AddPayloadToSlot(slotNumber, hDlg, hButton);
             GetXR1(hDlg).PlaySound(GetXR1(hDlg).SwitchOn, DeltaGliderXR1::ST_Other, MED_CLICK);  // medium click 
@@ -332,9 +366,9 @@ bool XR1PayloadDialog::ProcessSlotButtonMsg(HWND hDlg, const int slotNumber, con
 // Instantiate a new instance of the selected payload vessel and add it to the
 // specified slot if there is room.
 // Returns: true on success, false if slot is already occupied or if there is no room for the new vessel
-bool XR1PayloadDialog::AddPayloadToSlot(const int slotNumber, HWND hDlg, HWND hButton)
+bool XR1PayloadDialog::AddPayloadToSlot(const int slotNumber, QWidget *hDlg, QWidget *hButton)
 {
-    _ASSERTE(slotNumber > 0);
+    assert(slotNumber > 0);  // _ASSERTE counterpart
     bool retVal = false;
 
     // retrieve selected vessel classname
@@ -356,9 +390,9 @@ bool XR1PayloadDialog::AddPayloadToSlot(const int slotNumber, HWND hDlg, HWND hB
   
 // Delete the vessel in the selected slot
 // Returns: true on success, false if no payload is in the selected slot.
-bool XR1PayloadDialog::RemovePayloadFromSlot(const int slotNumber, HWND hDlg, HWND hButton)
+bool XR1PayloadDialog::RemovePayloadFromSlot(const int slotNumber, QWidget *hDlg, QWidget *hButton)
 {
-    _ASSERTE(slotNumber > 0);
+    assert(slotNumber > 0);  // _ASSERTE counterpart
     bool retVal = false;
 
     DeltaGliderXR1 &xr1 = GetXR1(hDlg);
@@ -383,7 +417,7 @@ bool XR1PayloadDialog::RemovePayloadFromSlot(const int slotNumber, HWND hDlg, HW
 // disabled slots do not need to be pushed or unpushed since it is irrelevant.
 //
 // This method must be invoked each time a payload is added to/removed from the bay.
-void XR1PayloadDialog::RescanBayAndUpdateButtonStates(HWND hDlg, DeltaGliderXR1 *pXR1)
+void XR1PayloadDialog::RescanBayAndUpdateButtonStates(QWidget *hDlg, DeltaGliderXR1 *pXR1)
 {
     if (pXR1 == nullptr)
         pXR1 = &GetXR1(hDlg);
@@ -403,11 +437,11 @@ void XR1PayloadDialog::RescanBayAndUpdateButtonStates(HWND hDlg, DeltaGliderXR1 
         int buttonResourceID = slotResourceIDs[i];
         
         // Set pushed/unpushed based on whether payload is in this slot
-        const HWND hButton = ::GetDlgItem(hDlg, buttonResourceID);
-        ::SendMessage(hButton, BM_SETCHECK, (pSlot->IsOccupied() ? BST_CHECKED : BST_UNCHECKED), 0);
+        QAbstractButton *const hButton = DlgItem<QAbstractButton>(hDlg, buttonResourceID);
+        hButton->setChecked(pSlot->IsOccupied());   // BM_SETCHECK counterpart
 
         // enable/disable the button for this slot
-        ::EnableWindow(hButton, isEnabled);
+        hButton->setEnabled(isEnabled);   // EnableWindow counterpart
 
         // Set the text to BOLD if this button contains content that is of the selected payload object class; 
         // otherwise, set it back to normal.
@@ -429,22 +463,20 @@ void XR1PayloadDialog::RescanBayAndUpdateButtonStates(HWND hDlg, DeltaGliderXR1 
         {
             // First time through; retrieve its original font and create the new bold font
             // These handles will persist until the dialog closes.
-            s_hOrgFont = (HFONT)::SendMessage(hButton, WM_GETFONT, 0, 0);
-            LOGFONT lf;
-            GetObject(s_hOrgFont, sizeof(lf), &lf);   // fill in the LOGFONT value
+            QFont lf = hButton->font();   // WM_GETFONT + GetObject(LOGFONT) counterpart
 
             // Ensure that the org font is NOT bold; for some reason Windows seems to use a default BOLD 
             // font on very rare occasions.
             // do not free old font since Windows owns it
-            lf.lfWeight = FW_NORMAL;
-            s_hOrgFont = CreateFontIndirect(&lf);    // normal font
+            lf.setWeight(QFont::Normal);   // FW_NORMAL
+            s_hOrgFont = new QFont(lf);    // normal font; CreateFontIndirect counterpart
 
             // create a new bold font, set the button font, and force a redraw
-            lf.lfWeight = FW_EXTRABOLD;
-            s_hBoldFont = CreateFontIndirect(&lf);
+            lf.setWeight(QFont::ExtraBold);   // FW_EXTRABOLD
+            s_hBoldFont = new QFont(lf);
         }        
 
-        ::SendMessage(hButton, WM_SETFONT, (WPARAM)(isBold ? s_hBoldFont : s_hOrgFont), TRUE);
+        hButton->setFont(*(isBold ? s_hBoldFont : s_hOrgFont));   // WM_SETFONT counterpart
     }
 
     // update the ship's mass fields as well
@@ -455,18 +487,21 @@ void XR1PayloadDialog::RescanBayAndUpdateButtonStates(HWND hDlg, DeltaGliderXR1 
 // pOut will be empty if no payload is present.
 // outLength = size of pOut buffer
 // Returns # of characters read from the drop-down list
-int XR1PayloadDialog::GetSelectedPayloadClassname(const HWND hDlg, char *pOut, const int outLength)
+int XR1PayloadDialog::GetSelectedPayloadClassname(QWidget *const hDlg, char *pOut, const int outLength)
 {
     // value in combo box changed: read the selected classname and populate the payload values for it
-    HWND hListBox = ::GetDlgItem(hDlg, IDC_COMBO_SELECTED_PAYLOAD_OBJECT);
-    LRESULT result = ::SendMessage(hListBox, WM_GETTEXT, outLength, reinterpret_cast<LPARAM>(pOut)); 
+    QComboBox *hListBox = DlgItem<QComboBox>(hDlg, IDC_COMBO_SELECTED_PAYLOAD_OBJECT);
+    const std::string text = hListBox->currentText().toStdString();   // WM_GETTEXT counterpart: copies at most outLength-1 chars
+    const size_t result = std::min<size_t>(text.size(), static_cast<size_t>(outLength - 1));
+    memcpy(pOut, text.c_str(), result);
+    pOut[result] = 0;
 
     return static_cast<int>(result);
 }
 
 // invoked whenever the selected payload type changed
 // pXR1: pointer to our parent vessel; may be nullptr only if not invoked from WM_INIT.
-void XR1PayloadDialog::ProcessSelectedPayloadChanged(HWND hDlg, DeltaGliderXR1 *pXR1)
+void XR1PayloadDialog::ProcessSelectedPayloadChanged(QWidget *hDlg, DeltaGliderXR1 *pXR1)
 {
     // retrieve the new classname value from the combo box
     char pSelectedClassname[256];

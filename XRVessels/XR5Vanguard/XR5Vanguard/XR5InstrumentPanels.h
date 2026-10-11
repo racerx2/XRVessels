@@ -88,7 +88,7 @@ private:
 class XR5UpperInstrumentPanel : public XR5InstrumentPanel
 {
 public:
-    XR5UpperInstrumentPanel::XR5UpperInstrumentPanel(XR5Vanguard &vessel, const WORD panelResourceID) :
+    XR5UpperInstrumentPanel(XR5Vanguard &vessel, const WORD panelResourceID) :
         XR5InstrumentPanel(vessel, PANEL_UPPER, panelResourceID)
     {
     }
@@ -139,7 +139,7 @@ protected:
 class XR5PayloadInstrumentPanel1280 : public XR5PayloadInstrumentPanel
 {
 public:
-    XR5PayloadInstrumentPanel1280::XR5PayloadInstrumentPanel1280(XR5Vanguard &vessel) : 
+    XR5PayloadInstrumentPanel1280(XR5Vanguard &vessel) : 
         XR5PayloadInstrumentPanel(vessel, IDB_PANEL5_1280)
     {
     }
@@ -149,7 +149,7 @@ public:
 class XR5OverheadInstrumentPanel1280 : public XR5OverheadInstrumentPanel
 {
 public:
-    XR5OverheadInstrumentPanel1280::XR5OverheadInstrumentPanel1280(XR5Vanguard &vessel) : 
+    XR5OverheadInstrumentPanel1280(XR5Vanguard &vessel) : 
         XR5OverheadInstrumentPanel(vessel, IDB_PANEL4_1280)
     {
     }
@@ -188,7 +188,7 @@ public:
 class XR5PayloadInstrumentPanel1600 : public XR5PayloadInstrumentPanel
 {
 public:
-    XR5PayloadInstrumentPanel1600::XR5PayloadInstrumentPanel1600(XR5Vanguard &vessel) : 
+    XR5PayloadInstrumentPanel1600(XR5Vanguard &vessel) : 
         XR5PayloadInstrumentPanel(vessel, IDB_PANEL5_1600)
     {
     }
@@ -198,7 +198,7 @@ public:
 class XR5OverheadInstrumentPanel1600 : public XR5OverheadInstrumentPanel
 {
 public:
-    XR5OverheadInstrumentPanel1600::XR5OverheadInstrumentPanel1600(XR5Vanguard &vessel) : 
+    XR5OverheadInstrumentPanel1600(XR5Vanguard &vessel) : 
         XR5OverheadInstrumentPanel(vessel, IDB_PANEL4_1600)
     {
     }
@@ -238,7 +238,7 @@ public:
 class XR5PayloadInstrumentPanel1920 : public XR5PayloadInstrumentPanel
 {
 public:
-    XR5PayloadInstrumentPanel1920::XR5PayloadInstrumentPanel1920(XR5Vanguard &vessel) : 
+    XR5PayloadInstrumentPanel1920(XR5Vanguard &vessel) : 
         XR5PayloadInstrumentPanel(vessel, IDB_PANEL5_1920)
     {
     }
@@ -248,7 +248,7 @@ public:
 class XR5OverheadInstrumentPanel1920 : public XR5OverheadInstrumentPanel
 {
 public:
-    XR5OverheadInstrumentPanel1920::XR5OverheadInstrumentPanel1920(XR5Vanguard &vessel) : 
+    XR5OverheadInstrumentPanel1920(XR5Vanguard &vessel) : 
         XR5OverheadInstrumentPanel(vessel, IDB_PANEL4_1920)
     {
     }

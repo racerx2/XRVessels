@@ -85,3 +85,17 @@ Per the GPLV3 license terms, you CANNOT build or link this project using any clo
 For more information and support regarding Orbiter and the XR vessels, visit https://www.orbiter-forum.com/.
 
 Happy Orbiting!
+
+## Linux port (not upstream)
+
+Native Linux build of the XR1, XR2 and XR5 for the Linux/Vulkan edition of Orbiter (github.com/racerx2/orbiter-2027-linux). Ported from this repository at c69365b (version 2.0) by racerx2, 2026, under the GPLv3 like the original. The XR3 Phoenix and XRVesselCtrlDemo are not built.
+
+What changed: only the Windows-specific lines, each marked with a one-line comment. Windows GDI drawing goes through `framework/framework/XRGdi.h` (GDI counterparts on QPainter), Win32 dialogs and scenario-editor pages are Qt dialogs built from the same .rc templates, the registry is `Config/XRGlobalSettings.ini`, and ATL `CString` is `std::string`.
+
+Build and install into an Orbiter folder (needs CMake, Ninja, GCC 15, Qt 6):
+
+    cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake
+    cmake --build out/build
+    cmake --install out/build
+
+`ORBITER_CMAKE_DIR` is the folder holding Orbiter's `rcresources.cmake` and `rc2cpp.py` (an installed Orbiter has them in its `cmake` folder, the default). Install copies the modules to `Modules/` and the XR1/XR5 data from `Orbiter/`; files already in the Orbiter folder are never overwritten. The XR2's mesh and textures are not part of this repository: install them from the official XR2 Ravenstar package.

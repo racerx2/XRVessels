@@ -30,6 +30,7 @@
 #include "XR1FuelPostSteps.h"
 #include "AreaIDs.h"
 #include "XRPayloadBay.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 //---------------------------------------------------------------------------
 
@@ -299,7 +300,7 @@ void FuelDumpPostStep::clbkPrePostStep(const double simt, const double simdt, co
                 sprintf(temp, "WARNING: SCRAM fuel dump in progress.");
             else    // should never happen!
             {
-                _ASSERTE(false);
+                assert(false);  // _ASSERTE counterpart
                 *temp = 0;
             }
 

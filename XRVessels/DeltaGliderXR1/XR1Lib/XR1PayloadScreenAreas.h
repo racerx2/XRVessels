@@ -53,7 +53,7 @@ protected:
 
     int m_idbDeployPayloadOrbit;   // resource ID
     int m_idbDeployPayloadLanded;  // resource ID
-    HFONT m_hFont;
+    QFont *m_hFont;
     COORD2 m_deployButton;
     COORD2 m_deployAllButton;
     
@@ -109,7 +109,7 @@ protected:
     static const COORD2 &s_screenSize;   // size of the screen in pixels
 
     int m_idbGrapplePayload;  // resource ID
-    HFONT m_hFont;
+    QFont *m_hFont;
     COORD2 m_grappleButton;
     COORD2 m_grappleAllButton;
     COORD2 m_rangeButton;

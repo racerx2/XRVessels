@@ -634,7 +634,7 @@ void DeltaGliderXR1::ParsePRPLevel(const char *line, const int nameLen)
                 continue;   // out-of-range!  Ignore and try to continue.
 
             sscanf(p+1, "%f", &level[levelIndex]);
-            ValidateFraction(static_cast<float>(level[levelIndex]));
+            ValidateFraction(level[levelIndex]);  // MSVC identity cast stayed an lvalue: clamps level[] in place
         }
     }
 

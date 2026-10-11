@@ -22,106 +22,104 @@
 #include "DeltaGliderXR1.h"
 #include "ScnEditorAPI.h"
 #include "DlgCtrl.h"
+#include "OrbiterResource.h"  // not upstream: Qt dialog helpers (DlgItem, oapiConnectDlgCommands)
 
 static HELPCONTEXT g_hc = {
-    "html/vessels/deltaglider.chm",
+    (char *)"html/vessels/deltaglider.chm",  // literal -> char * cast
         0,
-        "html/vessels/deltaglider.chm::/deltaglider.hhc",
-        "html/vessels/deltaglider.chm::/deltaglider.hhk"
+        (char *)"html/vessels/deltaglider.chm::/deltaglider.hhc",  // literal -> char * cast
+        (char *)"html/vessels/deltaglider.chm::/deltaglider.hhk"  // literal -> char * cast
 };
 
 // static helper methods
-static void UpdateDamage (HWND hTab, DeltaGliderXR1 *dg)
+static void UpdateDamage (QWidget *hTab, DeltaGliderXR1 *dg)  // HWND -> QWidget *
 {
     int i;
     char cbuf[256];
     i = static_cast<int>((dg->lwingstatus*100.0+0.5));
     sprintf (cbuf, "%d %%", i);
-    SetWindowText (GetDlgItem (hTab, IDC_LEFTWING_STATUS), cbuf);
-    oapiSetGaugePos (GetDlgItem (hTab, IDC_LEFTWING_SLIDER), i);
+    oapiSetDlgItemText (hTab, IDC_LEFTWING_STATUS, cbuf);  // SetWindowText(GetDlgItem) counterpart
+    oapiSetGaugePos (oapiResDlgItem (hTab, IDC_LEFTWING_SLIDER), i);  // GetDlgItem counterpart
     i = static_cast<int>((dg->rwingstatus*100.0+0.5));
     sprintf (cbuf, "%d %%", i);
-    SetWindowText (GetDlgItem (hTab, IDC_RIGHTWING_STATUS), cbuf);
-    oapiSetGaugePos (GetDlgItem (hTab, IDC_RIGHTWING_SLIDER), i);
+    oapiSetDlgItemText (hTab, IDC_RIGHTWING_STATUS, cbuf);  // SetWindowText(GetDlgItem) counterpart
+    oapiSetGaugePos (oapiResDlgItem (hTab, IDC_RIGHTWING_SLIDER), i);  // GetDlgItem counterpart
 }
 
 // ==============================================================
 // Scenario editor interface
 // ==============================================================
 
-DeltaGliderXR1 *GetDG (HWND hDlg)
+DeltaGliderXR1 *GetDG (QWidget *hDlg)  // HWND -> QWidget *
 {
     // retrieve DG interface from scenario editor
     OBJHANDLE vessel;
-    SendMessage (hDlg, WM_SCNEDITOR, SE_GETVESSEL, reinterpret_cast<LPARAM>(&vessel));
+    ScnEditorMsg (hDlg, SE_GETVESSEL, reinterpret_cast<LPARAM>(&vessel));  // SendMessage WM_SCNEDITOR counterpart
     return static_cast<DeltaGliderXR1 *>(oapiGetVesselInterface(vessel));
 }
 
 // --------------------------------------------------------------
 // Message procedure for editor page 1 (animation settings)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void EdPg1Proc (QWidget *hTab, void *context)  // DLGPROC -> DLGINIT
 {
-    switch (uMsg) {
-    case WM_COMMAND:
-        switch (LOWORD (wParam)) {
+    oapiConnectDlgCommands (hTab, [hTab](int id, int code, QWidget *hCtrl) {  // WM_COMMAND counterpart
+        switch (id) {  // LOWORD(wParam) counterpart
         case IDHELP:
-            g_hc.topic = "/SE_Anim.htm";
+            g_hc.topic = (char *)"/SE_Anim.htm";  // literal -> char * cast
             oapiOpenHelp (&g_hc);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_GEAR_UP:
             GetDG(hTab)->ActivateLandingGear(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_GEAR_DOWN:
             GetDG(hTab)->ActivateLandingGear(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_RETRO_CLOSE:
             GetDG(hTab)->ActivateRCover(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_RETRO_OPEN:
             GetDG(hTab)->ActivateRCover(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_OLOCK_CLOSE:
             GetDG(hTab)->ActivateOuterAirlock(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_OLOCK_OPEN:
             GetDG(hTab)->ActivateOuterAirlock(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_ILOCK_CLOSE:
             GetDG(hTab)->ActivateInnerAirlock(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_ILOCK_OPEN:
             GetDG(hTab)->ActivateInnerAirlock(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_NCONE_CLOSE:
             GetDG(hTab)->ActivateOuterAirlock(DoorStatus::DOOR_CLOSED);  // NOTE: outer airlock must close, too!
             GetDG(hTab)->ActivateNoseCone(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_NCONE_OPEN:
             GetDG(hTab)->ActivateNoseCone(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_LADDER_RETRACT:
             GetDG(hTab)->ActivateLadder(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_LADDER_EXTEND:
             GetDG(hTab)->ActivateLadder(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_HATCH_CLOSE:
             GetDG(hTab)->ActivateHatch(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_HATCH_OPEN:
             GetDG(hTab)->ActivateHatch(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         case IDC_RADIATOR_RETRACT:
             GetDG(hTab)->ActivateRadiator(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;
         case IDC_RADIATOR_EXTEND:
             GetDG(hTab)->ActivateRadiator(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;
         }
-        break;
-    }
-    return FALSE;
+    });  // end of WM_COMMAND counterpart
 }
 
 #if 0  // this was not compatible with UMMU to begin with
@@ -198,19 +196,18 @@ INT_PTR CALLBACK EdPg2Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 // --------------------------------------------------------------
 // Message procedure for editor page 3 (damage)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg3Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void EdPg3Proc (QWidget *hTab, void *context)  // DLGPROC -> DLGINIT
 {
     DeltaGliderXR1 *dg;
     
-    switch (uMsg) {
-    case WM_INITDIALOG: {
-        dg = static_cast<DeltaGliderXR1 *>(oapiGetVesselInterface(reinterpret_cast<OBJHANDLE>(lParam)));
+    {  // WM_INITDIALOG
+        dg = static_cast<DeltaGliderXR1 *>(oapiGetVesselInterface(static_cast<OBJHANDLE>(context)));  // lParam -> DLGINIT context
         GAUGEPARAM gp = { 0, 100, GAUGEPARAM::LEFT, GAUGEPARAM::BLACK };
-        oapiSetGaugeParams (GetDlgItem (hTab, IDC_LEFTWING_SLIDER), &gp);
-        oapiSetGaugeParams (GetDlgItem (hTab, IDC_RIGHTWING_SLIDER), &gp);
+        oapiSetGaugeParams (oapiResDlgItem (hTab, IDC_LEFTWING_SLIDER), &gp);  // GetDlgItem counterpart
+        oapiSetGaugeParams (oapiResDlgItem (hTab, IDC_RIGHTWING_SLIDER), &gp);  // GetDlgItem counterpart
         UpdateDamage (hTab, dg);
-                        } break;
-    case WM_COMMAND:
+                        }
+    // WM_COMMAND: no handler; its fall-through into WM_HSCROLL matched no scroll request
         /* NOT IMPLEMENTED
         switch (LOWORD (wParam)) {
         case IDC_REPAIR:
@@ -221,40 +218,40 @@ INT_PTR CALLBACK EdPg3Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
         }
         break;
         */
-        case WM_HSCROLL:
-            dg = GetDG(hTab);
-            int id = GetDlgCtrlID ((HWND)lParam);
+    for (int sliderId : {IDC_LEFTWING_SLIDER, IDC_RIGHTWING_SLIDER}) {  // WM_HSCROLL: GaugeCtrl::scrolled of both sliders
+        QObject::connect (DlgItem<GaugeCtrl> (hTab, sliderId), &GaugeCtrl::scrolled, hTab, [hTab, sliderId](int request, int pos) {
+            DeltaGliderXR1 *dg = GetDG(hTab);
+            int id = sliderId;  // GetDlgCtrlID(lParam) counterpart
             switch (id) {
             case IDC_LEFTWING_SLIDER:
             case IDC_RIGHTWING_SLIDER:
-                switch (LOWORD (wParam)) {
-                case SB_THUMBTRACK:
-                case SB_LINELEFT:
-                case SB_LINERIGHT:
+                switch (request) {  // LOWORD(wParam) counterpart
+                case GAUGE_THUMBTRACK:  // SB_THUMBTRACK
+                case GAUGE_LINEDEC:     // SB_LINELEFT
+                case GAUGE_LINEINC:     // SB_LINERIGHT
                     if (id == IDC_LEFTWING_SLIDER)
-                        dg->lwingstatus = HIWORD(wParam)*0.01;
+                        dg->lwingstatus = pos*0.01;  // HIWORD(wParam) -> pos
                     else
-                        dg->rwingstatus = HIWORD(wParam)*0.01;
+                        dg->rwingstatus = pos*0.01;  // HIWORD(wParam) -> pos
                     dg->ApplyDamage ();
                     UpdateDamage (hTab, dg);
-                    return TRUE;
+                    return;  // return TRUE counterpart
                 }
                 break;
             }
-            break;
+        });
     }
-    return FALSE;
 }
 
 // --------------------------------------------------------------
 // Add vessel-specific pages into scenario editor
 // --------------------------------------------------------------
-DLLCLBK void secInit (HWND hEditor, OBJHANDLE vessel)
+DLLCLBK void secInit (QWidget *hEditor, OBJHANDLE vessel)  // HWND -> QWidget *
 {
     DeltaGliderXR1 *dg = static_cast<DeltaGliderXR1 *>(oapiGetVesselInterface(vessel));
     
     EditorPageSpec eps1 = {"Animations", g_hDLL, IDD_EDITOR_PG1, EdPg1Proc};
-    SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps1));
+    ScnEditorMsg (hEditor, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps1));  // SendMessage WM_SCNEDITOR counterpart
     EditorPageSpec eps3 = {"Damage", g_hDLL, IDD_EDITOR_PG3, EdPg3Proc};
-    SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps3));
+    ScnEditorMsg (hEditor, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps3));  // SendMessage WM_SCNEDITOR counterpart
 }

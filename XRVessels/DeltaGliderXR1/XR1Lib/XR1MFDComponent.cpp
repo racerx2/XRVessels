@@ -27,12 +27,14 @@
 // Handles a single MFD for a 2D panel
 // ==============================================================
 
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "resource.h"
 #include "AreaIDs.h"
 #include "XR1InstrumentPanels.h"
 #include "XR1Areas.h"
 #include "XR1MFDComponent.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 // Constructor
 // parentPanel = parent instrument panel
@@ -205,8 +207,8 @@ void MFDMainButtonsArea::Activate()
 
 bool MFDMainButtonsArea::Redraw2D(const int event, const SURFHANDLE surf)
 {
-    HDC hDC = GetDC(surf);
-    HFONT pFont = (HFONT)SelectObject(hDC, m_font);
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
+    QFont *pFont = (QFont *)SelectObject(hDC, m_font);  // HFONT counterpart
     SetTextColor (hDC, RGB(196, 196, 196));
     SetTextAlign (hDC, TA_CENTER);
     SetBkMode (hDC, TRANSPARENT);
@@ -337,7 +339,7 @@ bool VCMFDBottomButtonArea::ProcessVCMouseEvent(const int event, const VECTOR3 &
         break;
 
     default:
-        _ASSERTE(false);  // should never happen!
+        assert(false);  // should never happen!; _ASSERTE counterpart
         return false;
     }
 

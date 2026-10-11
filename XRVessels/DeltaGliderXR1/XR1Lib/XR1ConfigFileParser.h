@@ -30,7 +30,9 @@
 #pragma once
 
 #define _CRT_SECURE_NO_DEPRECATE
-#include "windows.h"
+// windows.h left out: the SDK headers and the standard library declare what is used
+#include <cstring>     // not upstream: strcpy, formerly via windows.h
+#include "OrbiterAPI.h" // not upstream: COLORREF, formerly via windows.h
 #include <vector>
 #include "VesselConfigFileParser.h"
 #include "SecondaryHUDData.h"
@@ -102,7 +104,7 @@ public:
     int mass;               // mass in kg
     char rank[CrewMemberRankLength+1];  // stored as MiscID in UMmu
     char mesh[CrewMemberMeshLength+1];
-    CString miscID;         // "XI0", "XI1", etc.
+    std::string miscID;         // "XI0", "XI1", etc.
 };
 
 #define PARSE_CHEATCODE_DOUBLE(name, variable)     \

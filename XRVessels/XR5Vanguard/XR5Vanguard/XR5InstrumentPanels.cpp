@@ -26,7 +26,8 @@
 // Custom instrument panels for the XR5
 // ==============================================================
 
-#include "OrbiterSDK.h"
+#include "Orbitersdk.h"
+#include "OrbiterResource.h"  // not upstream: oapiLoadResImage for LoadBitmap
 #include "resource.h"
 #include "XR5AreaIDs.h"
 
@@ -111,7 +112,7 @@ bool XR5MainInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
 
@@ -154,7 +155,7 @@ bool XR5PayloadInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
     
@@ -230,7 +231,7 @@ bool XR5OverheadInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
     
@@ -361,7 +362,7 @@ bool XR5UpperInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
     
@@ -388,7 +389,7 @@ bool XR5LowerInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
 

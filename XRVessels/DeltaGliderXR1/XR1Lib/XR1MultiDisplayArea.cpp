@@ -32,6 +32,8 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1MultiDisplayArea.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
+#include <climits>  // not upstream: INT_MAX for MAXLONG
 
 //----------------------------------------------------------------------------------
 
@@ -71,7 +73,7 @@ MultiDisplayArea::~MultiDisplayArea()
 // Activate this area
 void MultiDisplayArea::Activate()
 {
-    _ASSERTE(!IsActive());
+    assert(!IsActive());  // _ASSERTE counterpart
     Area::Activate();  // invoke superclass method
     // register area
     // specify both PANEL_REDRAW_ALWAYS and PANEL_REDRAW_MOUSE because we need explicit mouse events
@@ -83,7 +85,7 @@ void MultiDisplayArea::Activate()
 // Deactivate this area
 void MultiDisplayArea::Deactivate()
 {
-    _ASSERTE(IsActive());
+    assert(IsActive());  // _ASSERTE counterpart
     // Deactivate the active mode, if any
     TurnOff();
 
@@ -120,9 +122,9 @@ int MultiDisplayArea::SwitchActiveMode(DIRECTION dir)
     // get the active mode number
     int activeMode = m_pActiveDisplayMode->GetModeNumber();   // 0...n
     
-    int lowestMode = MAXLONG;
+    int lowestMode = INT_MAX;  // MAXLONG (0x7fffffff) counterpart
     int highestMode = -1;
-    int closestMatchUp = MAXLONG;
+    int closestMatchUp = INT_MAX;  // MAXLONG (0x7fffffff) counterpart
     int closestMatchDown = -1;
     int newMode = -1;
     
@@ -149,7 +151,7 @@ int MultiDisplayArea::SwitchActiveMode(DIRECTION dir)
     // now figure out the new mode, wrapping around if necessary
     if (dir == DIRECTION::UP)
     {
-        if (closestMatchUp == MAXLONG)
+        if (closestMatchUp == INT_MAX)  // MAXLONG (0x7fffffff) counterpart
             newMode = lowestMode;   // wrap around
         else
             newMode = closestMatchUp;   // move up one step

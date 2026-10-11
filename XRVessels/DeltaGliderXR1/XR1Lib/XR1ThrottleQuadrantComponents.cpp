@@ -27,7 +27,7 @@
 // Handles main, hover, and scram throttle controls
 // ==============================================================
 
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "resource.h"
 #include "AreaIDs.h"
 #include "XR1InstrumentPanels.h"

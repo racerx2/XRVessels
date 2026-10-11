@@ -34,37 +34,41 @@
 #include "XR1PayloadBay.h"
 
 // custom messages
-#define WM_XR1_UPDATEMASSVALUES (WM_USER+100) /* so we don't step on Orbiter's message IDs */
-#define WM_TERMINATE            (WM_USER+101) /* clean up and close dialog gracefully: LPARAM = DeltaGliderXR1 * requesting the close. */
+// WM_XR1_UPDATEMASSVALUES left out: never sent; UpdateMassValues is called directly
+// WM_TERMINATE -> XR1PayloadDialog::Terminate (clean up and close dialog gracefully)
 
 // static payload handler class
 class XR1PayloadDialog
 {
 public:
     static void EditorFunc(OBJHANDLE hVessel);
-    static HWND Launch(OBJHANDLE hVessel);
+    static QWidget *Launch(OBJHANDLE hVessel);
+    static void Terminate(QWidget *hDlg, DeltaGliderXR1 *pRequestingXR1);  // WM_TERMINATE counterpart
     
 protected:
-    static DeltaGliderXR1 &GetXR1(HWND hDlg) { return *static_cast<DeltaGliderXR1 *>(oapiGetDialogContext(hDlg)); }  // WARNING: not valid during WM_INITDIALOG! 
-    static INT_PTR CALLBACK Proc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);  // message handler
-    static void UpdateMassValues(HWND hDlg, const DeltaGliderXR1 &xr1);
-    static void UpdatePayloadFields(HWND hDlg, const char *pClassname);
-    static bool ProcessSlotButtonMsg(HWND hDlg, const int slotNumber, const HWND hButton, const WORD notificationMsg);
+    static DeltaGliderXR1 &GetXR1(QWidget *hDlg) { return *static_cast<DeltaGliderXR1 *>(oapiGetDialogContext(hDlg)); }  // WARNING: not valid during WM_INITDIALOG! 
+    static void Proc(QWidget *hDlg, void *context);  // DLGINIT: WM_INITDIALOG body, connects WM_COMMAND
+    static void TimerProc(QWidget *hDlg, const int timerID);  // WM_TIMER counterpart
+    static void SetTimer(QWidget *hDlg, const int timerID, const int elapse, void *timerFunc);  // SetTimer counterpart (QTimer)
+    static void KillTimer(QWidget *hDlg, const int timerID);  // KillTimer counterpart
+    static void UpdateMassValues(QWidget *hDlg, const DeltaGliderXR1 &xr1);
+    static void UpdatePayloadFields(QWidget *hDlg, const char *pClassname);
+    static bool ProcessSlotButtonMsg(QWidget *hDlg, const int slotNumber, QWidget *const hButton, const WORD notificationMsg);
 
-    static bool AddPayloadToSlot(const int slotNumber, HWND hDlg, HWND hButton);
-    static bool RemovePayloadFromSlot(const int slotNumber, HWND hDlg, HWND hButton);
+    static bool AddPayloadToSlot(const int slotNumber, QWidget *hDlg, QWidget *hButton);
+    static bool RemovePayloadFromSlot(const int slotNumber, QWidget *hDlg, QWidget *hButton);
 
-    static void RescanBayAndUpdateButtonStates(HWND hDlg, DeltaGliderXR1 *pXR1 = nullptr);
-    static void ProcessSelectedPayloadChanged(HWND hDlg, DeltaGliderXR1 *pXR1 = nullptr);
+    static void RescanBayAndUpdateButtonStates(QWidget *hDlg, DeltaGliderXR1 *pXR1 = nullptr);
+    static void ProcessSelectedPayloadChanged(QWidget *hDlg, DeltaGliderXR1 *pXR1 = nullptr);
 
-    static void CloseDialog(HWND hDlg);
+    static void CloseDialog(QWidget *hDlg);
 
     // utility methods
-    static int GetSelectedPayloadClassname(const HWND hDlg, char *pOut, const int outLength);
+    static int GetSelectedPayloadClassname(QWidget *const hDlg, char *pOut, const int outLength);
 
     // data
     static const int slotCount;          // total # of slots in the bay
     static const int slotResourceIDs[];  // array of button resource IDs in slot order
-    static HFONT s_hOrgFont;      // normal button font handle
-    static HFONT s_hBoldFont;     // bold button font handle
+    static QFont *s_hOrgFont;      // normal button font handle
+    static QFont *s_hBoldFont;     // bold button font handle
 };

@@ -30,16 +30,17 @@
 #include "ScnEditorAPI.h"
 #include "DlgCtrl.h"
 #include "XR1PayloadDialog.h"
+#include "OrbiterResource.h"  // not upstream: oapiConnectDlgCommands (WM_COMMAND counterpart)
 
 // ==============================================================
 // Scenario editor interface
 // ==============================================================
 
-XR5Vanguard *GetXR5 (HWND hDlg)
+XR5Vanguard *GetXR5 (QWidget *hDlg)  // HWND -> QWidget
 {
     // retrieve vessel interface from scenario editor
     OBJHANDLE vessel;
-    SendMessage (hDlg, WM_SCNEDITOR, SE_GETVESSEL, reinterpret_cast<LPARAM>(&vessel));
+    ScnEditorMsg (hDlg, SE_GETVESSEL, reinterpret_cast<LPARAM>(&vessel));  // SendMessage WM_SCNEDITOR counterpart
     return static_cast<XR5Vanguard *>(oapiGetVesselInterface (vessel));
 }
 
@@ -47,9 +48,8 @@ XR5Vanguard *GetXR5 (HWND hDlg)
 // Message procedure for editor page 1 (animation settings)
 // lParam = Orbiter vessel handle
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void EdPg1Proc (QWidget *hTab, void *context)  // DLGINIT; was INT_PTR CALLBACK (HWND, UINT, WPARAM, LPARAM)
 {
-    switch (uMsg) {
     /* Note: for some reason Orbiter appears to be trapping keystrokes, so this will not work.
     case WM_KEYDOWN:
         if (wParam == VK_ESCAPE)
@@ -57,104 +57,102 @@ INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;  // pass it on
     */
 
-    case WM_COMMAND:
-        switch (LOWORD (wParam)) {
+    oapiConnectDlgCommands (hTab, [hTab](int id, int code, QWidget *hCtrl) {  // WM_COMMAND counterpart
+        switch (id) {  // LOWORD(wParam) counterpart
         case IDHELP:
             // TODO: add editor help
-            return FALSE;
+            return;  // return FALSE counterpart
         case IDC_GEAR_UP:
             GetXR5(hTab)->ActivateLandingGear(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_GEAR_DOWN:
             GetXR5(hTab)->ActivateLandingGear(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_RETRO_CLOSE:
             GetXR5(hTab)->ActivateRCover(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_RETRO_OPEN:
             GetXR5(hTab)->ActivateRCover(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_OLOCK_CLOSE:
             GetXR5(hTab)->ActivateOuterAirlock(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_OLOCK_OPEN:
             GetXR5(hTab)->ActivateOuterAirlock(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_ILOCK_CLOSE:
             GetXR5(hTab)->ActivateInnerAirlock(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_ILOCK_OPEN:
             GetXR5(hTab)->ActivateInnerAirlock(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_DOCKING_STOW:
             GetXR5(hTab)->ActivateOuterAirlock(DoorStatus::DOOR_CLOSED);  // NOTE: outer airlock must close, too!
             GetXR5(hTab)->ActivateNoseCone(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_DOCKING_DEPLOY:
             GetXR5(hTab)->ActivateNoseCone(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_ELEVATOR_STOW:
             GetXR5(hTab)->ActivateElevator(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_ELEVATOR_DEPLOY:
             GetXR5(hTab)->ActivateElevator(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_HATCH_CLOSE:
             GetXR5(hTab)->ActivateHatch(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_HATCH_OPEN:
             GetXR5(hTab)->ActivateHatch(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_RADIATOR_STOW:
             GetXR5(hTab)->ActivateRadiator(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_RADIATOR_DEPLOY:
             GetXR5(hTab)->ActivateRadiator(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_SCRAM_CLOSE:
             GetXR5(hTab)->ActivateScramDoors(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_SCRAM_OPEN:
             GetXR5(hTab)->ActivateScramDoors(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_HOVER_CLOSE:
             GetXR5(hTab)->ActivateHoverDoors(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_HOVER_OPEN:
             GetXR5(hTab)->ActivateHoverDoors(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_BAY_CLOSE:
             GetXR5(hTab)->ActivateBayDoors(DoorStatus::DOOR_CLOSED);
-            return TRUE;
+            return;  // return TRUE counterpart
         case IDC_BAY_OPEN:
             GetXR5(hTab)->ActivateBayDoors(DoorStatus::DOOR_OPEN);
-            return TRUE;
+            return;  // return TRUE counterpart
         }
-        break;
-    }
-    return FALSE;
+    });  // was break; } return FALSE;
 }
 
 // --------------------------------------------------------------
 // Add vessel-specific pages into scenario editor
 // --------------------------------------------------------------
-DLLCLBK void secInit (HWND hEditor, OBJHANDLE hVessel)
+DLLCLBK void secInit (QWidget *hEditor, OBJHANDLE hVessel)  // HWND -> QWidget
 {
     // animation page
     EditorPageSpec eps1 = {"Animations", g_hDLL, IDD_EDITOR_PG1, EdPg1Proc};
-    SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps1));
+    ScnEditorMsg (hEditor, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps1));  // SendMessage WM_SCNEDITOR counterpart
 
     // payload page
     EditorFuncSpec efs = { "Payload", XR1PayloadDialog::EditorFunc};
-    SendMessage (hEditor, WM_SCNEDITOR, SE_ADDFUNCBUTTON, reinterpret_cast<LPARAM>(&efs));
+    ScnEditorMsg (hEditor, SE_ADDFUNCBUTTON, reinterpret_cast<LPARAM>(&efs));  // SendMessage WM_SCNEDITOR counterpart
 }

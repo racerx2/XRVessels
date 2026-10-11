@@ -30,7 +30,7 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "Area.h"
 #include "XR1Areas.h"
 #include "RollingArray.h"
@@ -165,8 +165,8 @@ protected:
     // MDA area. In addition, the font control isn't quite as precise under sketchpad (FF_MODERN fonts looks a lot
     // better in the MDA), so I am keeping the GetDC version for now.
 #if 1  // GetDC
-    HFONT m_pKfcFont;
-    HFONT m_pCoolantFont;   // coolant temps only
+    QFont *m_pKfcFont;
+    QFont *m_pCoolantFont;   // coolant temps only
 #else  // Sketchpad
     oapi::Font *m_pKfcFont;
     oapi::Font *m_pCoolantFont;   // coolant temps only    
@@ -191,7 +191,7 @@ protected:
     int m_screenIndex;    // 0-n; this is the status screen index
 
     // fonts
-    HFONT m_mainFont;
+    QFont *m_mainFont;
 };
 
 //----------------------------------------------------------------------------------
@@ -234,10 +234,10 @@ protected:
     int m_repeatCount;        // # of repeats this press (hold)
     
     // fonts
-    HFONT m_statusFont;
-    HFONT m_numberFont;
-    HFONT m_buttonFont;    // engage/disengage button
-    HFONT m_aoaPitchFont;
+    QFont *m_statusFont;
+    QFont *m_numberFont;
+    QFont *m_buttonFont;    // engage/disengage button
+    QFont *m_aoaPitchFont;
 };
 
 //----------------------------------------------------------------------------------
@@ -272,9 +272,9 @@ protected:
     int m_repeatCount;             // # of repeats this press (hold)
     
     // fonts
-    HFONT m_statusFont;
-    HFONT m_numberFont;
-    HFONT m_buttonFont;    // engage/disengage button
+    QFont *m_statusFont;
+    QFont *m_numberFont;
+    QFont *m_buttonFont;    // engage/disengage button
 };
 
 //----------------------------------------------------------------------------------
@@ -314,9 +314,9 @@ protected:
     RollingArray *m_pMaxMainAccRollingArray;  // smooths out the jumpy ACC values computed from the Orbiter core's force vectors
     
     // fonts
-    HFONT m_statusFont;
-    HFONT m_numberFont;
-    HFONT m_buttonFont;    // engage/disengage button
+    QFont *m_statusFont;
+    QFont *m_numberFont;
+    QFont *m_buttonFont;    // engage/disengage button
 };
 
 //----------------------------------------------------------------------------------
@@ -376,5 +376,5 @@ protected:
     virtual int GetDoorCount() { return 6; }    // invoked by OnParentAttach
 
     // fonts
-    HFONT m_mainFont;
+    QFont *m_mainFont;
 };

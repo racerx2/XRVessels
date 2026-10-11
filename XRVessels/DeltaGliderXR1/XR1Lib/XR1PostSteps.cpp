@@ -30,6 +30,7 @@
 #include "XR1PostSteps.h"
 #include "AreaIDs.h"
 #include "XRPayloadBay.h"   // not used by the XR1
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 //---------------------------------------------------------------------------
 
@@ -277,6 +278,7 @@ void SetSlopePostStep::clbkPrePostStep(const double simt, const double simdt, co
     // over time vary, which would make accuracy (and lag) dependent on the framerate.  So we sync at 60 fps instead (see m_refreshRate value).
     if (m_isNextUpdateTimeValid && (simt >= m_nextUpdateTime))
     {
+        {  // not upstream: scope block so goto reset crosses no initialization (MSVC allowed it)
 		const double groundspeed = GetVessel().GetGroundspeed();
 
         const double timeDeltaSinceLastUpdate = simt - m_lastUpdateTime;
@@ -301,6 +303,7 @@ void SetSlopePostStep::clbkPrePostStep(const double simt, const double simdt, co
         // A = arctan(a / b)
         GetXR1().m_slope = atan(a / b);     // slope in radians
         // DEBUG: sprintf(oapiDebugString(), "a=%0.4lf, b=%0.4lf, c=%0.4lf, slope=%lf, velocity=%lf, timeDeltaSinceLastUpdate=%lf", a, b, c, GetXR1().m_slope * DEG, airspeed, timeDeltaSinceLastUpdate);
+        }  // not upstream: end of scope block
 
 reset:
         // reset for next sample
@@ -1129,7 +1132,7 @@ void OneShotInitializationPostStep::clbkPrePostStep(const double simt, const dou
 
     // NOTE: since we only reach here on startup and startup always starts at simt=0, we don't need to worry about
     // simt ever being negative here (because of the m_done check above).
-    _ASSERTE(simt >= 0);
+    assert(simt >= 0);  // _ASSERTE counterpart
 
     // wait 0.5 second before initializing
     if (simt < 0.5)

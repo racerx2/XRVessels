@@ -21,9 +21,19 @@
 
 #pragma once
 
-#include <windows.h>
-#include <WinCrypt.h>	// for DATA_BLOB
-#include <atlstr.h>		// for CString
+// windows.h and WinCrypt.h left out: the values go to an INI file through QSettings, no registry on Linux
+#include <string>      // atlstr.h left out: std::string stands in for CString
+#include <cstdint>
+#include "OrbiterAPI.h"
+
+class QSettings;
+class QWidget;
+
+// not upstream: WinCrypt.h's DATA_BLOB
+struct DATA_BLOB { DWORD cbData; BYTE *pbData; };
+
+// not upstream: root key names; the key path becomes a group in Config/XRGlobalSettings.ini
+#define HKEY_CURRENT_USER "HKEY_CURRENT_USER"
 
 // Reads & writes our values to the registry
 class RegKeyManager
@@ -32,27 +42,27 @@ public:
     RegKeyManager();
     virtual ~RegKeyManager();
 
-    bool Initialize(const HKEY hRootKey, const TCHAR *pSubkeyPath, const HWND hOwnerWindow);
+    bool Initialize(const char *hRootKey, const char *pSubkeyPath, QWidget *const hOwnerWindow);
     bool IsInitialized() const { return m_bInitialized; }
 
-    bool WriteRegistryString(const TCHAR *pValueName, const TCHAR *pValue) const;
-    bool ReadRegistryString(const TCHAR *pValueName, CString &valueOut) const;
+    bool WriteRegistryString(const char *pValueName, const char *pValue) const;
+    bool ReadRegistryString(const char *pValueName, std::string &valueOut) const;
     
-    bool WriteRegistryBlob(const TCHAR *pValueName, const DATA_BLOB &blob) const;
-    bool ReadRegistryBlob(const TCHAR *pValueName, DATA_BLOB &blobOut) const;
+    bool WriteRegistryBlob(const char *pValueName, const DATA_BLOB &blob) const;
+    bool ReadRegistryBlob(const char *pValueName, DATA_BLOB &blobOut) const;
     
-    bool WriteRegistryDWORD(const TCHAR *pValueName, const DWORD dwValue) const;
-    bool ReadRegistryDWORD(const TCHAR *pValueName, DWORD &valueOut) const;
+    bool WriteRegistryDWORD(const char *pValueName, const DWORD dwValue) const;
+    bool ReadRegistryDWORD(const char *pValueName, DWORD &valueOut) const;
     
-    bool WriteRegistryQWORD(const TCHAR *pValueName, const ULONGLONG dwValue) const;
-    bool ReadRegistryQWORD(const TCHAR *pValueName, ULONGLONG &valueOut) const;
+    bool WriteRegistryQWORD(const char *pValueName, const uint64_t dwValue) const;
+    bool ReadRegistryQWORD(const char *pValueName, uint64_t &valueOut) const;
 
-    LONG DeleteRegistryValue(const TCHAR *pValueName) const;
+    LONG DeleteRegistryValue(const char *pValueName) const;
 
 private:
-    HKEY m_hKey;
-    HWND m_hOwnerWindow;  
+    QSettings *m_hKey;
+    QWidget *m_hOwnerWindow;  
     bool m_bInitialized;
 
-    TCHAR *m_pSubkeyPath;  // preserved for error messages
+    char *m_pSubkeyPath;  // preserved for error messages
 };

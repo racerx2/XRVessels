@@ -22,6 +22,8 @@
 #include "DeltaGliderXR1.h"
 #include "XR1PreSteps.h"
 #include "XRPayloadBay.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
+#include <climits>  // not upstream: INT_MAX for MAXLONG
 
 //---------------------------------------------------------------------------
 
@@ -374,7 +376,7 @@ void MachCalloutsPreStep::clbkPrePostStep(const double simt, const double simdt,
 
     if (!groundContact && (mach <= 0))  // prevent resets when on ground
     {
-        m_previousMach = MAXLONG;   // out of the atmosphere
+        m_previousMach = INT_MAX;   // out of the atmosphere; MAXLONG (0x7fffffff) counterpart
         return;     // nothing more to do
     }
 
@@ -600,8 +602,8 @@ void DockingCalloutsPreStep::clbkPrePostStep(const double simt, const double sim
 
     if ((distance >= 0) && (m_previousDistance >= 0))  // no callouts if not in range OR if we just entered range but haven't updated previous distance yet.
     {
-        _ASSERTE(m_intervalStartTime >= 0);
-        _ASSERTE(m_intervalStartDistance >= 0);
+        assert(m_intervalStartTime >= 0);  // _ASSERTE counterpart
+        assert(m_intervalStartDistance >= 0);  // _ASSERTE counterpart
 
         // Note: in order to support UCD (Universal Cargo Deck), we need to only play the warning if the ship has closed at least 0.1 meter over the last second (0.1 m/s)
         // Vessel distance "jitters" even when a vessel is attached to UCD which is attached in the XR payload bay.

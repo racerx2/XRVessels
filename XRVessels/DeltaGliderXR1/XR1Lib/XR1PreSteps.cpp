@@ -31,6 +31,7 @@
 #include "XR1PreSteps.h"
 #include "AreaIDs.h"
 #include "XRPayloadBay.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 //---------------------------------------------------------------------------
 
@@ -183,7 +184,7 @@ double DrainBayFuelTanksPreStep::FlowBayFuel(const PROPELLANT_HANDLE ph, const b
     }
 
     const double requestedFlowQty = maxInternalTankQty - internalTankQty;
-    _ASSERTE(requestedFlowQty >= 0);  // should never flowing in the other direction here!
+    assert(requestedFlowQty >= 0);  // should never flowing in the other direction here!; _ASSERTE counterpart
     double fuelFlowedToMainTank = 0;
     if (requestedFlowQty > 0)
     {
@@ -280,10 +281,10 @@ void ParkingBrakePreStep::clbkPrePostStep(const double simt, const double simdt,
 					
 					const char *pVesselNameInScenario = GetXR1().GetName();	// "XR2-01", etc.
 
-					CString filename;
-					filename.Format("%s_temp", pVesselNameInScenario);   // file will be created in $ORBITER_HOME\config
+					std::string filename;  // CString counterpart
+					{ char buf[256]; snprintf(buf, sizeof(buf), "%s_temp", pVesselNameInScenario); filename = buf; }   // file will be created in $ORBITER_HOME\config; CString::Format counterpart
 
-					FILEHANDLE fh = oapiOpenFile(static_cast<const char *>(filename), FILE_OUT, CONFIG);
+					FILEHANDLE fh = oapiOpenFile(filename.c_str(), FILE_OUT, CONFIG);  // CString cast counterpart
 					oapiWriteScenario_string(fh, "STATUS", landedStr);
 					oapiWriteScenario_float(fh, "HEADING", status.surf_hdg * DEG);
 
@@ -295,7 +296,7 @@ void ParkingBrakePreStep::clbkPrePostStep(const double simt, const double simdt,
 					sprintf(position, "%.20f %.20f", status.surf_lng * DEG, status.surf_lat * DEG);
 					oapiWriteScenario_string(fh, "POS", position);
 					oapiCloseFile(fh, FILE_OUT);
-					fh = oapiOpenFile(static_cast<const char *>(filename), FILE_IN, CONFIG);
+					fh = oapiOpenFile(filename.c_str(), FILE_IN, CONFIG);  // CString cast counterpart
 					GetXR1().clbkLoadStateEx(fh, &status);
 					oapiCloseFile(fh, FILE_IN);
 				}

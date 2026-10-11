@@ -26,6 +26,7 @@
 #include "DeltaGliderXR1.h"
 #include "XR1PreSteps.h"
 #include "AreaIDs.h"
+#include <strings.h>  // not upstream: strcasecmp
 
 // perform an EVA for the specified crew member
 // Returns: true on success, false on error (crew member not present or outer airlock door is closed)
@@ -465,7 +466,7 @@ int DeltaGliderXR1::GetCrewAgeByName(const char* pName) const
     for (int i = 0; i < MAX_PASSENGERS; i++)
     {
         CrewMember* pcm = GetXR1Config()->CrewMembers + i;
-        if (_stricmp(pcm->name, pName) == 0)
+        if (strcasecmp(pcm->name, pName) == 0)  // _stricmp counterpart
         {
             age = pcm->age;
             break;
@@ -485,9 +486,9 @@ const char* DeltaGliderXR1::GetCrewMiscIdByName(const char* pName) const
     for (int i = 0; i < MAX_PASSENGERS; i++)
     {
         CrewMember* pcm = GetXR1Config()->CrewMembers + i;
-        if (_stricmp(pcm->name, pName) == 0)
+        if (strcasecmp(pcm->name, pName) == 0)  // _stricmp counterpart
         {
-            pMiscID = pcm->miscID;  // "XI0", "XI1", etc.
+            pMiscID = pcm->miscID.c_str();  // "XI0", "XI1", etc.; CString implicit const char * counterpart
             break;
         }
     }

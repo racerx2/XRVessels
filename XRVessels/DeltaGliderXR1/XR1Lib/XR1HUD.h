@@ -30,7 +30,7 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "Area.h"
 #include "XR1Areas.h"
 #include "TextBox.h"
@@ -123,7 +123,7 @@ public:
 
     // subclass must implement these methods
     // NOTE: the subclass MUST draw text from the supplied topY coordinate!
-    virtual bool DrawHUD(const int event, const int topyY, HDC hDC, COLORREF colorRef, bool forceRender) = 0;
+    virtual bool DrawHUD(const int event, const int topyY, QPainter *hDC, COLORREF colorRef, bool forceRender) = 0;
     virtual bool isOn() = 0;    // returns TRUE if HUD is turned on, FALSE if turned off
 
 protected:
@@ -134,8 +134,8 @@ protected:
     COLORREF m_colorRef;
     COLORREF m_bgColorRef;
     COLORREF m_hlColorRef;
-    HPEN m_pen0;
-    HBRUSH m_hBackgroundBrush;
+    QPen *m_pen0;
+    QBrush *m_hBackgroundBrush;
     TextBox *m_pTextBox;    // may be null
     int m_lastRenderedTopYCoordinate;
 
@@ -154,14 +154,14 @@ class SecondaryHUDArea: public PopupHUDArea
 public:
     SecondaryHUDArea(InstrumentPanel &parentPanel, const COORD2 panelCoordinates, const int areaID);
     virtual ~SecondaryHUDArea();
-    virtual bool DrawHUD(const int event, const int topY, HDC hDC, COLORREF colorRef, bool forceRender);
+    virtual bool DrawHUD(const int event, const int topY, QPainter *hDC, COLORREF colorRef, bool forceRender);
     virtual bool isOn();    
     virtual void SetHUDColors();
-    virtual void RenderCell(HDC hDC, SecondaryHUDMode &secondaryHUD, const int row, const int column, const int topY);
+    virtual void RenderCell(QPainter *hDC, SecondaryHUDMode &secondaryHUD, const int row, const int column, const int topY);
     virtual void PopulateCell(SecondaryHUDMode::Cell &cell);
 
 protected:
-    HFONT m_mainFont;
+    QFont *m_mainFont;
     int m_lineSpacing;  // pixels between text lines
     int m_lastHUDMode;  // 1-5
 };
@@ -174,11 +174,11 @@ class TertiaryHUDArea: public PopupHUDArea
 public:
     TertiaryHUDArea(InstrumentPanel &parentPanel, const COORD2 panelCoordinates, const int areaID);
     virtual ~TertiaryHUDArea();
-    virtual bool DrawHUD(const int event, const int topY, HDC hDC, COLORREF colorRef, bool forceRender);
+    virtual bool DrawHUD(const int event, const int topY, QPainter *hDC, COLORREF colorRef, bool forceRender);
     virtual bool isOn();
     virtual void SetHUDColors();
 
 protected:
-    HFONT m_mainFont;
+    QFont *m_mainFont;
     int m_lineSpacing;  // pixels between text lines
 };

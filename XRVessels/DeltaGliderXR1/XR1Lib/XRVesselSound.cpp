@@ -24,6 +24,7 @@
 // ==============================================================
 
 #include "DeltaGliderXR1.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 // invoked during vessel initialization
 // Returns: true if init successful, false if XRSound not loaded
@@ -304,13 +305,13 @@ void DeltaGliderXR1::ShowWarning(const char* pSoundFilename, const SoundType sou
     // the poststep will pick this sound at the next timestep and play it within 5 seconds
     if (pSoundFilename != nullptr)
     {
-        _ASSERTE(soundType != ST_None);
+        assert(soundType != ST_None);  // _ASSERTE counterpart
         strcpy(m_warningWavFilename, pSoundFilename);
         m_warningWaveSoundType = soundType;
     }
     else
     {
-        _ASSERTE(soundType == ST_None);
+        assert(soundType == ST_None);  // _ASSERTE counterpart
     }
 }
 

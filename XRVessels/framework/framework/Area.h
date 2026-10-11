@@ -103,13 +103,13 @@ public:
     // Note: these methods must be public instead of protected because we need to access them from MultiDisplayArea classes.
     //*************************************************************************************************
     void SetSurfaceColorKey(const SURFHANDLE surf, const DWORD ck);  // replaces oapiSetSurfaceColourKey
-    HDC GetDC(const SURFHANDLE surf);                                // replaces oapiGetDC
-    void ReleaseDC(const SURFHANDLE surf, const HDC hDC);            // replaces oapiReleaseDC
+    QPainter *GetDC(const SURFHANDLE surf);                                // replaces oapiGetDC
+    void ReleaseDC(const SURFHANDLE surf, QPainter *const hDC);            // replaces oapiReleaseDC
 
 protected:
     // NOTE: subclasses should always override one or both of these two methods
     // NOTE: in general, Redraw2D implementations are inheritable by subclsses and work fine unchanged, but Redraw3D implementations are vessel-specific (e.g., animating switches, etc.)
-    virtual bool Redraw2D(const int event, const SURFHANDLE surf) { _ASSERTE(false); return false; }  // should never reach here, because it means no handler was implemented for a 2D area in 2D panel mode!
+    virtual bool Redraw2D(const int event, const SURFHANDLE surf) { assert(false); return false; }  // should never reach here, because it means no handler was implemented for a 2D area in 2D panel mode!
     virtual bool Redraw3D(const int event, const SURFHANDLE surf) { return Redraw2D(event, surf); }   // by default, perform same action as 2D (necessary for 'glass panel' VC panels)
 
     SURFHANDLE CreateSurface(const int resourceID) const;

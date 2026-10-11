@@ -26,7 +26,8 @@
 // Custom instrument panels for the XR2
 // ==============================================================
 
-#include "OrbiterSDK.h"
+#include "Orbitersdk.h"
+#include "OrbiterResource.h"  // not upstream: oapiLoadResImage
 #include "resource.h"
 #include "XR2AreaIDs.h"
 
@@ -118,7 +119,7 @@ bool XR2MainInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
 
@@ -161,7 +162,7 @@ bool XR2PayloadInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
 
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
     
@@ -314,7 +315,7 @@ bool XR2UpperInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
     
@@ -341,7 +342,7 @@ bool XR2LowerInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
 

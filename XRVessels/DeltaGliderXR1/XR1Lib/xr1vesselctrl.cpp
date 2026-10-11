@@ -29,6 +29,7 @@
 #include "DeltaGliderXR1.h"
 #include "XRPayloadBay.h"
 #include "XRPayloadBaySlot.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 // utility macros
 #define LOWER_LIMIT(x, lim)  if (x < lim) x = lim
@@ -483,11 +484,11 @@ bool DeltaGliderXR1::SetXRSystemStatus(const XRSystemStatusWrite &status)
     ClearAllXRDamage();
 
     // Now apply the new status one item at a time
-#define SET_DMG_INT(statusField, XREnum)  { double val = status.##statusField; LIMITS(val, 0, 1.0); SetDamageStatus(XREnum, val); }
+#define SET_DMG_INT(statusField, XREnum)  { double val = status.statusField; LIMITS(val, 0, 1.0); SetDamageStatus(XREnum, val); }  // MSVC-only token paste "status.##" dropped
 #define SET_DMG_ENUM(statusField, XREnum)                       \
      {                                                          \
         double val;                                             \
-        XRDamageState state = status.##statusField;             \
+        XRDamageState state = status.statusField;  /* MSVC-only token paste dropped */ \
         if (state == XRDamageState::XRDMG_online) val = 1.0;    \
         else val = 0.0;  /* unsupported or offline */           \
         SetDamageStatus(XREnum, val);                           \
@@ -1013,15 +1014,15 @@ int DeltaGliderXR1::GetStatusScreenText(char *pLinesOut, const int maxLinesToRet
     const int lineCount = m_infoWarningTextLineGroup.GetLineCount();
     const int linesToRetrieve = min(maxLinesToRetrieve, lineCount);
     const int startingLineIndex = lineCount - linesToRetrieve;
-    _ASSERTE(startingLineIndex >= 0);
+    assert(startingLineIndex >= 0);  // _ASSERTE counterpart
 
     *pLinesOut = 0;  // empty contents
 
     // NOTE: lines are stored from OLD -> NEW, so we always copy the newest 'linesToRetrieve' lines in the vector
     for (int i=startingLineIndex; i < (startingLineIndex + linesToRetrieve); i++)
     {
-        _ASSERTE(i >= 0);
-        _ASSERTE(i < INFO_WARNING_BUFFER_LINES);
+        assert(i >= 0);  // _ASSERTE counterpart
+        assert(i < INFO_WARNING_BUFFER_LINES);  // _ASSERTE counterpart
         TextLine textLine = m_infoWarningTextLineGroup.GetLine(i);
         
         // retrieve each line's string object and copy it to pLinesOut by value and terminating each with \r\n
@@ -1090,7 +1091,7 @@ bool DeltaGliderXR1::GetPayloadSlotData(const int slotNumber, XRPayloadSlotData 
         return false;
 
     const XRPayloadBaySlot *pSlot = m_pPayloadBay->GetSlot(slotNumber);
-    _ASSERTE(pSlot);
+    assert(pSlot);  // _ASSERTE counterpart
     
     // populate the XRPayloadSlotData to be returned to the caller
     slotDataOut.hCargoModuleVessel = pSlot->GetChild();  // may be nullptr
@@ -1117,7 +1118,7 @@ bool DeltaGliderXR1::CanAttachPayload(const OBJHANDLE hPayloadVessel, const int 
         return false;
 
     const XRPayloadBaySlot *pSlot = m_pPayloadBay->GetSlot(slotNumber);
-    _ASSERTE(pSlot);
+    assert(pSlot);  // _ASSERTE counterpart
 
     // retrieve the vessel for the supplied payload vessel handle
     VESSEL *pPayloadVessel = oapiGetVesselInterface(hPayloadVessel);

@@ -29,12 +29,12 @@
 
 #pragma once
 
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 
 class DeltaGliderXR1;
 
 // for use by build version strings
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__LP64__)   // not upstream: __LP64__ for 64-bit Linux
 #define ARCH_TYPE "64-bit"
 #else
 #define ARCH_TYPE "32-bit"
@@ -225,7 +225,7 @@ extern const char *ALL_SYSTEMS_NOMINAL_MSG;
 //
 // Globals
 //
-extern HMODULE g_hDLL;
+extern void *g_hDLL;
 
 // Global enum; NOT_SET is only used by GearCalloutsPostStep
 enum class DoorStatus { NOT_SET = -2, DOOR_FAILED, DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING };
@@ -374,7 +374,7 @@ struct DamageStatus
 {
     double fracIntegrity;   // 0-1
     char label[64];         // cosmetic label ("Left Wing", etc.)
-    char shortLabel[5];     // abbreviated label ("LWng")
+    char shortLabel[6];     // abbreviated label ("LWng"); not upstream: [5] -> [6], "RCS10" and its terminator overflowed into onlineOffline
     bool onlineOffline;     // if true, status is "ONLINE/OFFLINE" vs. "100%, 0%"
 };
 
@@ -413,7 +413,7 @@ struct HullTemperatureLimits
 // ==============================================================
 // Global callback prototypes 
 
-INT_PTR CALLBACK XR1Ctrl_DlgProc(HWND, UINT, WPARAM, LPARAM);
+void XR1Ctrl_DlgProc(QWidget *hDlg, void *context);   // DLGPROC -> DLGINIT
 
 // callout globals
 extern const double V1_CALLOUT_AIRSPEED;

@@ -30,6 +30,11 @@
 #include "FileList.h"
 #include <string>
 #include <string.h>
+#include <strings.h>   // not upstream: strcasecmp
+#include <cassert>
+#include <algorithm>
+#include <QImage>      // not upstream: LoadImage counterpart
+#include <QString>
 
 // define static data
 HASHMAP_STR_XRPAYLOAD XRPayloadClassData::s_classnameToXRPayloadClassDataMap;
@@ -58,7 +63,8 @@ const XRPayloadClassData &XRPayloadClassData::GetXRPayloadClassDataForClassname(
     XRPayloadClassData *pRetVal = nullptr;
 
     // pull the data from cache, which was already pre-populated with all .cfg files in the system
-    auto it = s_classnameToXRPayloadClassDataMap.find(&string(pClassname));
+    const string classnameKey(pClassname);   // not upstream: GCC rejects the address of a temporary
+    auto it = s_classnameToXRPayloadClassDataMap.find(&classnameKey);
     if (it != s_classnameToXRPayloadClassDataMap.end())
     {
         // object is in cache: return it
@@ -67,7 +73,8 @@ const XRPayloadClassData &XRPayloadClassData::GetXRPayloadClassDataForClassname(
     else   // something goofy is going on: there is no .cfg for this vessel under Config\Vessels
     {
         // return the default PCD 
-        pRetVal = s_classnameToXRPayloadClassDataMap.find(&string(XRPAYLOAD_BAY_CLASSNAME))->second;  // will always succeed
+        const string bayClassnameKey(XRPAYLOAD_BAY_CLASSNAME);   // not upstream: GCC rejects the address of a temporary
+        pRetVal = s_classnameToXRPayloadClassDataMap.find(&bayClassnameKey)->second;  // will always succeed
     }
 
     return *pRetVal;
@@ -111,7 +118,7 @@ void XRPayloadClassData::InitializeXRPayloadClassData()
 
     protected:
         // Callback invoked for non-empty .cfg files.
-        virtual void clbkProcessFile(const char *pConfigFilespec, const WIN32_FIND_DATA &fd) override
+        virtual void clbkProcessFile(const char *pConfigFilespec, const fs::directory_entry &fd) override   // WIN32_FIND_DATA -> directory_entry
         {
             char pClassname[MAX_PATH];
             const int configVesselsPathPrefixLength = 15;     // "Config\Vessels\"
@@ -138,7 +145,7 @@ void XRPayloadClassData::InitializeXRPayloadClassData()
     CfgFileList FileList;
     FileList.Scan();    // invokes our clbkProcessFile method above for each .cfg file found
 
-    _ASSERTE(!FileList.GetScannedFilesList().empty());  // should have at least our XRPayloadBay.cfg in the list, plus the other vessels
+    assert(!FileList.GetScannedFilesList().empty());  // should have at least our XRPayloadBay.cfg in the list, plus the other vessels
 }
 
 //=========================================================================
@@ -150,8 +157,8 @@ void XRPayloadClassData::InitializeXRPayloadClassData()
 XRPayloadClassData::XRPayloadClassData(const char *pConfigFilespec, const char *pClassname) :
     m_hThumbnailBitmap(nullptr)
 {
-    m_pClassname = _strdup(pClassname);
-    m_pConfigFilespec = _strdup(pConfigFilespec);
+    m_pClassname = strdup(pClassname);              // _strdup -> strdup
+    m_pConfigFilespec = strdup(pConfigFilespec);    // _strdup -> strdup
     
     // set default values; these are overridden by values in the config file, if any
     m_isXRPayloadEnabled = false;     // default is FALSE
@@ -252,13 +259,15 @@ XRPayloadClassData::XRPayloadClassData(const char *pConfigFilespec, const char *
     // Orbiter.exe is running.
     static char pFullThumbnailPath[1024];    
     sprintf(pFullThumbnailPath, "Config\\%s", pThumbnailPath);
-    m_hThumbnailBitmap = (HBITMAP)LoadImage(0, pFullThumbnailPath, IMAGE_BITMAP, PAYLOAD_THUMBNAIL_DIMX, PAYLOAD_THUMBNAIL_DIMY, LR_LOADFROMFILE);  // will be null if load failed
+    QImage thumbnailImage(QString::fromStdString(oapiResolvePath(pFullThumbnailPath)));   // LoadImage(LR_LOADFROMFILE) counterpart
+    m_hThumbnailBitmap = (thumbnailImage.isNull() ? nullptr : new QImage(thumbnailImage.scaled(PAYLOAD_THUMBNAIL_DIMX, PAYLOAD_THUMBNAIL_DIMY)));  // will be null if load failed
     if (m_hThumbnailBitmap == nullptr)
     {
         // Bad thumbnail path!  Switch to the default thumbnail.
         // Note: it is too early for oapiDebugString() to work, and we don't have access to the XR log, so we don't bother logging a message here.
         sprintf(pFullThumbnailPath, "Config\\%s", DEFAULT_PAYLOAD_THUMBNAIL_PATH);  // reset to default thumbnail
-        m_hThumbnailBitmap = (HBITMAP)LoadImage(0, pFullThumbnailPath, IMAGE_BITMAP, PAYLOAD_THUMBNAIL_DIMX, PAYLOAD_THUMBNAIL_DIMY, LR_LOADFROMFILE);  // will be null if load failed, but default should always succeed
+        QImage defaultThumbnailImage(QString::fromStdString(oapiResolvePath(pFullThumbnailPath)));   // LoadImage(LR_LOADFROMFILE) counterpart
+        m_hThumbnailBitmap = (defaultThumbnailImage.isNull() ? nullptr : new QImage(defaultThumbnailImage.scaled(PAYLOAD_THUMBNAIL_DIMX, PAYLOAD_THUMBNAIL_DIMY)));  // will be null if load failed, but default should always succeed
     }
 }
 
@@ -285,7 +294,7 @@ XRPayloadClassData::~XRPayloadClassData()
 
     // free the thumbnail bitmap, if any
     if (m_hThumbnailBitmap != nullptr)
-        DeleteObject(m_hThumbnailBitmap);
+        delete m_hThumbnailBitmap;   // DeleteObject counterpart
 }
 
 // Add an explicit attachment point to which this object may dock.
@@ -296,7 +305,8 @@ void XRPayloadClassData::AddExplicitAttachmentSlot(const char *pParentVesselClas
 {
     vector<int> *pSlotList = nullptr;  // assume not found
     
-    auto it = m_explicitAttachmentSlotsMap.find(&string(pParentVesselClassname));
+    const string parentClassnameKey(pParentVesselClassname);   // not upstream: GCC rejects the address of a temporary
+    auto it = m_explicitAttachmentSlotsMap.find(&parentClassnameKey);
     
     // did we find an existing slot list of the specified vessel class?
     if (it != m_explicitAttachmentSlotsMap.end())
@@ -319,7 +329,8 @@ void XRPayloadClassData::AddExplicitAttachmentSlot(const char *pParentVesselClas
 // Returns true if any explicit bay slots are defined for the specified vessel classname.
 bool XRPayloadClassData::AreAnyExplicitAttachmentSlotsDefined(const char *pParentVesselClassname) const
 {
-    auto it = m_explicitAttachmentSlotsMap.find(&string(pParentVesselClassname));
+    const string parentClassnameKey(pParentVesselClassname);   // not upstream: GCC rejects the address of a temporary
+    auto it = m_explicitAttachmentSlotsMap.find(&parentClassnameKey);
     return (it != m_explicitAttachmentSlotsMap.end());
 }
 
@@ -328,7 +339,8 @@ bool XRPayloadClassData::IsExplicitAttachmentSlotAllowed(const char *pParentVess
 {
     bool retVal = true;     // assume vessel not found
 
-    auto it = m_explicitAttachmentSlotsMap.find(&string(pParentVesselClassname));
+    const string parentClassnameKey(pParentVesselClassname);   // not upstream: GCC rejects the address of a temporary
+    auto it = m_explicitAttachmentSlotsMap.find(&parentClassnameKey);
     if (it != m_explicitAttachmentSlotsMap.end())
     {
         retVal = false;     // slot denied now unless explicitly found in the slot list below
@@ -362,7 +374,7 @@ const XRPayloadClassData **XRPayloadClassData::GetAllAvailableXRPayloads()
         VECTOR_XRPAYLOAD allXRPayloads;
 
         // Walk through each XRPayloadClassData in our s_classnameToXRPayloadClassDataMap and copy all XRPayload-enabled ones to our master s_allXRPayloadEnabledClassData 
-        unordered_map<const string *, XRPayloadClassData *>::const_iterator it = s_classnameToXRPayloadClassDataMap.begin();  // iterate over values
+        HASHMAP_STR_XRPAYLOAD::const_iterator it = s_classnameToXRPayloadClassDataMap.begin();  // iterate over values; not upstream: the map's own iterator type (it uses stringhasher)
         for (; it != s_classnameToXRPayloadClassDataMap.end(); it++)
         {
             const XRPayloadClassData *pPCD = it->second;  // get next PCD
@@ -398,7 +410,7 @@ ATTACHMENTHANDLE XRPayloadClassData::GetAttachmentHandleForPayloadVessel(const V
     {
         ATTACHMENTHANDLE hAttachment = childVessel.GetAttachmentHandle(true, i);  // will never be null since index is in range
         const char *pAttachmentID = childVessel.GetAttachmentId(hAttachment);
-        if ((pAttachmentID != nullptr) && (_stricmp(pAttachmentID, "XRCARGO") == 0))
+        if ((pAttachmentID != nullptr) && (strcasecmp(pAttachmentID, "XRCARGO") == 0))   // _stricmp -> strcasecmp
         {
             retVal = hAttachment;  // found it
             break;

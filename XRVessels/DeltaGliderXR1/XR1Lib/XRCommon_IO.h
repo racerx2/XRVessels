@@ -33,8 +33,9 @@
 //    int len;
 //    bool found;   // set to true if any SSCANF macro was invoked
 
-#define IF_FOUND(name)  if (!_strnicmp(line, name, (len = static_cast<int>(strlen(name))))) 
-#define IF_FOUND_CONFIG_OVERRIDE(name)  IF_FOUND("CONFIG_OVERRIDE_"##name)
+#include <strings.h>  // not upstream: strncasecmp
+#define IF_FOUND(name)  if (!strncasecmp(line, name, (len = static_cast<int>(strlen(name)))))  // _strnicmp counterpart
+#define IF_FOUND_CONFIG_OVERRIDE(name)  IF_FOUND("CONFIG_OVERRIDE_" name)  // MSVC ## on string literals: plain literal concatenation
 #define SET_CONFIG_OVERRIDE_INT(field, val)                             \
 {                                                                       \
     const_cast<XR1ConfigFileParser *>(GetXR1Config())->field = val;     \

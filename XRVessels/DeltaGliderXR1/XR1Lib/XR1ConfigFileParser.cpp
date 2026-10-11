@@ -32,6 +32,9 @@
 // ...
 // ==============================================================
 
+#include "Orbitersdk.h"  // windows.h left out of XR1ConfigFileParser.h: COLORREF etc. from the SDK
+#include <cstring>  // windows.h left out of XR1ConfigFileParser.h: strcpy
+#include <strings.h>  // not upstream: strcasecmp
 #include "XR1ConfigFileParser.h"
 #include "ConfigFileParserMacros.h"
 #include "XR1Globals.h"
@@ -102,7 +105,7 @@ XR1ConfigFileParser::XR1ConfigFileParser() :
         pCrewMember->mass = 68;
         strcpy(pCrewMember->rank, "Civilian");
         strcpy(pCrewMember->mesh, DEFAULT_CREW_MESH);
-        pCrewMember->miscID.Format("XI%d", i);      // "XI0", "XI1", etc.
+        { char buf[16]; snprintf(buf, sizeof(buf), "XI%d", i); pCrewMember->miscID = buf; }      // "XI0", "XI1", etc.; CString::Format counterpart
     }
 
     // write the XR1 version to the log to aid in debugging
@@ -716,13 +719,13 @@ bool XR1ConfigFileParser::ParseFuelTanks(const char *pValue, bool *pConfigArray)
         const char *pArg = val[i];
 
         // these are case-insensitive values
-        if (_stricmp(pArg, "main") == 0)
+        if (strcasecmp(pArg, "main") == 0)  // _stricmp counterpart
             pConfigArray[TANK_MAIN] = true;
-        else if (_stricmp(pArg, "scram") == 0)
+        else if (strcasecmp(pArg, "scram") == 0)  // _stricmp counterpart
             pConfigArray[TANK_SCRAM] = true;
-        else if (_stricmp(pArg, "apu") == 0)
+        else if (strcasecmp(pArg, "apu") == 0)  // _stricmp counterpart
             pConfigArray[TANK_APU] = true;
-        else if (_stricmp(pArg, "lox") == 0)
+        else if (strcasecmp(pArg, "lox") == 0)  // _stricmp counterpart
             pConfigArray[TANK_LOX] = true;
         else    // invalid tank ID
         {

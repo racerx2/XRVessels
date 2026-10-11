@@ -29,7 +29,7 @@
 #include <string>
 #include <unordered_map>
 
-using namespace stdext;
+// using namespace stdext left out: MSVC-only namespace
 using namespace std;
 
 class stringhasher

@@ -35,9 +35,15 @@
 
 #include "ConfigFileParser.h"
 
-#include <Shlwapi.h>   // for PathFileExists
+// Shlwapi.h left out: PathFileExists is std::filesystem::exists where used
 #include <string.h>
-#include <atlstr.h>
+// atlstr.h left out: std::string stands in for CString
+#include <cstdio>
+#include <ctime>
+#include <cerrno>
+#include <strings.h>   // not upstream: strcasecmp
+#include <QMessageBox>
+#include "OrbiterAPI.h"   // not upstream: oapiResolvePath
 
 // Constructor
 // pDefaultFilename = path to default config file; may be relative to Orbiter root or absolute
@@ -54,8 +60,8 @@ ConfigFileParser::ConfigFileParser(const char *pDefaultFilename, const char *pLo
         if (m_pLogFile == nullptr)
         {
             char temp[256];
-            sprintf(temp, "Error opening log file '%s' for writing; attempting to continue", pLogFilename);
-            MessageBox(nullptr, temp, "XR Framework Warning", MB_OK | MB_SETFOREGROUND);
+            snprintf(temp, sizeof(temp), "Error opening log file '%s' for writing; attempting to continue", pLogFilename);   // snprintf: FORTIFY aborts on overflow
+            QMessageBox::warning(nullptr, "XR Framework Warning", temp);   // MessageBox counterpart
         }
     }
 }
@@ -80,19 +86,19 @@ bool ConfigFileParser::ParseFile(const char *pFilename)
     if (pFilename == nullptr)
         pFilename = GetDefaultFilename();
 
-    const bool bParsingOverrideFile = (_stricmp(pFilename, GetDefaultFilename()) != 0);  // true if we are parsing an override file
+    const bool bParsingOverrideFile = (strcasecmp(pFilename, GetDefaultFilename()) != 0);  // true if we are parsing an override file; _stricmp -> strcasecmp
 
-    static char temp[256]; // reused for messages
+    static char temp[MAX_LINE_LENGTH + 512]; // reused for messages; not upstream: room for a full config line plus the file name
 
     // open the config file
-    sprintf(temp, "Parsing config file '%s'", pFilename);
+    snprintf(temp, sizeof(temp), "Parsing config file '%s'", pFilename);   // snprintf: FORTIFY aborts on overflow
     WriteLog(temp);
 
-    FILE *pFile = fopen(pFilename, "rt");
+    FILE *pFile = fopen(oapiResolvePath(pFilename).c_str(), "rt");   // Orbiter-relative path with '\' and any letter case
 
     if (pFile == nullptr)
     {
-        sprintf(temp, "ERROR: fopen failed for '%s'; GetLastError=0x%X", pFilename, GetLastError());
+        snprintf(temp, sizeof(temp), "ERROR: fopen failed for '%s'; errno=0x%X", pFilename, errno);   // GetLastError -> errno; snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         m_parseFailed = true;
         return false;       // could not open file
@@ -150,7 +156,7 @@ bool ConfigFileParser::ParseFile(const char *pFilename)
             const char *pEquals = strchr(m_buffer, '=');
             if (pEquals == nullptr)
             {
-                sprintf(temp, "Error parsing line #%d of file '%s': missing '=' character.  Line='%s'", lineNumber, pFilename, m_buffer);
+                snprintf(temp, sizeof(temp), "Error parsing line #%d of file '%s': missing '=' character.  Line='%s'", lineNumber, pFilename, m_buffer);   // snprintf: FORTIFY aborts on overflow
                 WriteLog(temp);
                 retVal = false;
                 continue;  // do NOT stop parsing; just skip to the next line
@@ -160,7 +166,7 @@ bool ConfigFileParser::ParseFile(const char *pFilename)
             const int nameLength = static_cast<int>((pEquals - m_buffer));    // # of chars in parsed name
             if (nameLength > MAX_NAME_LENGTH)
             {
-                sprintf(temp, "Error parsing line #%d of file '%s': name parameter too long (exceeds %d characters).  Line='%s'", 
+                snprintf(temp, sizeof(temp), "Error parsing line #%d of file '%s': name parameter too long (exceeds %d characters).  Line='%s'",   // snprintf: FORTIFY aborts on overflow
                     lineNumber, pFilename, MAX_NAME_LENGTH, m_buffer);
                 WriteLog(temp);
                 retVal = false;
@@ -172,7 +178,7 @@ bool ConfigFileParser::ParseFile(const char *pFilename)
             const int valueLength = static_cast<int>(strlen(pValue));
             if (valueLength > MAX_VALUE_LENGTH)
             {
-                sprintf(temp, "Error parsing line #%d of file '%s': value parameter too long (exceeds %d characters).  Line='%s'", 
+                snprintf(temp, sizeof(temp), "Error parsing line #%d of file '%s': value parameter too long (exceeds %d characters).  Line='%s'",   // snprintf: FORTIFY aborts on overflow
                     lineNumber, pFilename, MAX_VALUE_LENGTH, m_buffer);
                 WriteLog(temp);
                 retVal = false;
@@ -192,7 +198,7 @@ bool ConfigFileParser::ParseFile(const char *pFilename)
             // invoke the subclass to parse these values
             if (ParseLine(m_section, m_parsedName, m_parsedValue, bParsingOverrideFile) == false)
             {
-                sprintf(temp, "Name/Value error parsing line #%d of file '%s': Line='%s'.  Check the above log message for details.", 
+                snprintf(temp, sizeof(temp), "Name/Value error parsing line #%d of file '%s': Line='%s'.  Check the above log message for details.",   // snprintf: FORTIFY aborts on overflow
                     lineNumber, pFilename, m_buffer);
                 WriteLog(temp);
                 retVal = false;
@@ -209,7 +215,7 @@ bool ConfigFileParser::ParseFile(const char *pFilename)
     fclose(pFile);
     if (retVal)     // success?
     {
-        sprintf(temp, "Successfully parsed configuration file '%s'", pFilename);
+        snprintf(temp, sizeof(temp), "Successfully parsed configuration file '%s'", pFilename);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
     }
     else
@@ -283,22 +289,21 @@ void ConfigFileParser::WriteLog(const char *pMsg) const
     if ((pMsg == nullptr) || (m_pLogFile == nullptr)) 
         return;
 
-    CStringA csMsg;
+    char csMsg[MAX_LINE_LENGTH + 2048];   // CStringA counterpart: room for the timestamp, the prefix and a full-line message
     // get and format the current time
-    SYSTEMTIME st;
-    GetLocalTime(&st);
-    CString csPrefix;
-    if (!GetLogPrefix().IsEmpty())
-        csPrefix.Format("[%s] ", static_cast<const char *>(GetLogPrefix()));
+    timespec ts; clock_gettime(CLOCK_REALTIME, &ts); tm st; localtime_r(&ts.tv_sec, &st);   // GetLocalTime counterpart
+    std::string csPrefix;
+    if (!GetLogPrefix().empty())
+        csPrefix = "[" + GetLogPrefix() + "] ";   // CString::Format("[%s] ") counterpart
 
-    csMsg.Format("%02d.%02d.%04d %02d:%02d:%02d.%03d - %s%s\n", 
-        st.wMonth, st.wDay, st.wYear, 
-        st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
-        static_cast<const char *>(csPrefix), pMsg);
+    snprintf(csMsg, sizeof(csMsg), "%02d.%02d.%04d %02d:%02d:%02d.%03d - %s%s\n",   // CString::Format counterpart
+        st.tm_mon + 1, st.tm_mday, st.tm_year + 1900,   // SYSTEMTIME wMonth/wDay/wYear
+        st.tm_hour, st.tm_min, st.tm_sec, static_cast<int>(ts.tv_nsec / 1000000),   // wHour/wMinute/wSecond/wMilliseconds
+        csPrefix.c_str(), pMsg);
 
     // no point in checking for error here
-    OutputDebugString(csMsg);   // send to debug console
-    fwrite(csMsg, 1, csMsg.GetLength(), m_pLogFile);
+    fputs(csMsg, stderr);   // OutputDebugString counterpart: send to debug console
+    fwrite(csMsg, 1, strlen(csMsg), m_pLogFile);
 
     // flush to disk in case we crash or are terminated
     fflush(m_pLogFile);
@@ -312,13 +317,13 @@ bool ConfigFileParser::ValidateInt(const int value, const int min, const int max
     char temp[256];
     if (value < min)
     {
-        sprintf(temp, "Integer value '%d' is below minimum value of '%d'", value, min);
+        snprintf(temp, sizeof(temp), "Integer value '%d' is below minimum value of '%d'", value, min);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         retVal = false;
     }
     else if (value > max)
     {
-        sprintf(temp, "Integer value '%d' is above maximum value of '%d'", value, max);
+        snprintf(temp, sizeof(temp), "Integer value '%d' is above maximum value of '%d'", value, max);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         retVal = false;
     }
@@ -334,13 +339,13 @@ bool ConfigFileParser::ValidateDouble(const double value, const double min, cons
     char temp[256];
     if (value < min)
     {
-        sprintf(temp, "Double value '%lf' is below minimum value of '%lf'", value, min);
+        snprintf(temp, sizeof(temp), "Double value '%lf' is below minimum value of '%lf'", value, min);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         retVal = false;
     }
     else if (value > max)
     {
-        sprintf(temp, "Double value '%lf' is above maximum value of '%lf'", value, max);
+        snprintf(temp, sizeof(temp), "Double value '%lf' is above maximum value of '%lf'", value, max);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         retVal = false;
     }
@@ -356,13 +361,13 @@ bool ConfigFileParser::ValidateFloat(const float value, const float min, const f
     char temp[256];
     if (value < min)
     {
-        sprintf(temp, "Float value '%f' is below minimum value of '%f'", value, min);
+        snprintf(temp, sizeof(temp), "Float value '%f' is below minimum value of '%f'", value, min);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         retVal = false;
     }
     else if (value > max)
     {
-        sprintf(temp, "Float value '%f' is above maximum value of '%f'", value, max);
+        snprintf(temp, sizeof(temp), "Float value '%f' is above maximum value of '%f'", value, max);   // snprintf: FORTIFY aborts on overflow
         WriteLog(temp);
         retVal = false;
     }

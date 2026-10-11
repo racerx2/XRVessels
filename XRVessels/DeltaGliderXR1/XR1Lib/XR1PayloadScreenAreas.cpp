@@ -33,6 +33,7 @@
 #include "DeltaGliderXR1.h"
 #include "XR1PayloadScreenAreas.h"
 #include "XRPayloadBaySlot.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
 
 //----------------------------------------------------------------------------------
 
@@ -119,8 +120,8 @@ bool DeployPayloadArea::Redraw2D(const int event, const SURFHANDLE surf)
     const XRPayloadClassData *pChildVesselPCD = ((pChildVessel != nullptr) ? &XRPayloadClassData::GetXRPayloadClassDataForClassname(pChildVessel->GetClassName()) : nullptr);
 
     // obtain device context and save existing font
-    HDC hDC = GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_hFont);
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_hFont);  // HFONT counterpart
 
     SetBkMode(hDC, TRANSPARENT);
     SetTextColor(hDC, CREF(LIGHT_YELLOW));  // use CREF macro to convert to Windows' Blue, Green, Red COLORREF
@@ -155,8 +156,8 @@ bool DeployPayloadArea::Redraw2D(const int event, const SURFHANDLE surf)
 
         // SLOTS OCCUPIED
         textY += pitch;
-        VECTOR3 slots = pChildVesselPCD->GetSlotsOccupied();  
-        sprintf(msg, "%.1f L x %.1f W x %.1f H", slots.z, slots.x, slots.y); 
+        VECTOR3 slotsOccupied = pChildVesselPCD->GetSlotsOccupied();  // renamed: slots is a Qt macro
+        sprintf(msg, "%.1f L x %.1f W x %.1f H", slotsOccupied.z, slotsOccupied.x, slotsOccupied.y);  // renamed: slots is a Qt macro
         TextOut(hDC, 98, textY, msg, static_cast<int>(strlen(msg)));
     }
     else
@@ -167,7 +168,7 @@ bool DeployPayloadArea::Redraw2D(const int event, const SURFHANDLE surf)
     if (pChildVessel != nullptr)
     {
         SetTextColor(hDC, MEDIUM_GREEN);
-        _itoa(GetXR1().m_selectedSlot, msg, 10);
+        snprintf(msg, sizeof(msg), "%d", GetXR1().m_selectedSlot);  // _itoa counterpart
     }
     else
     {
@@ -461,7 +462,7 @@ bool PayloadThumbnailArea::Redraw2D(const int event, const SURFHANDLE surf)
     {
         if (pChildVesselPCD != nullptr)
         {
-            const HBITMAP hThumb = pChildVesselPCD->GetThumbnailBitmapHandle();  // may be null, but normally should not be
+            QImage *const hThumb = pChildVesselPCD->GetThumbnailBitmapHandle();  // may be null, but normally should not be; HBITMAP counterpart
             if (hThumb == nullptr)
             {
                 // render a black screen so the user knows his thumbnail path is invalid
@@ -472,12 +473,9 @@ bool PayloadThumbnailArea::Redraw2D(const int event, const SURFHANDLE surf)
             {
                 // WARNING: we cannot use SafeBlt to blit a bitmap here!  We must use the BitBlt Win32 call instead.
                 // obtain device context and save existing object
-                HDC hDC = GetDC(surf);
+                QPainter *hDC = GetDC(surf);  // HDC counterpart
                 
-                HDC hMemDC = CreateCompatibleDC(hDC);   // create an in-memory DC
-                SelectObject(hMemDC, hThumb);  // select the bitmap image into the in-memory DC
-                BitBlt(hDC, 0, 0, s_screenSize.x, s_screenSize.y, hMemDC, 0, 0, SRCCOPY);  // copy new bitmap to the screen
-                DeleteDC(hMemDC);       // clean up
+                hDC->drawImage(QRect(0, 0, s_screenSize.x, s_screenSize.y), *hThumb, QRect(0, 0, s_screenSize.x, s_screenSize.y));  // copy new bitmap to the screen; CreateCompatibleDC/SelectObject/BitBlt SRCCOPY/DeleteDC counterpart
 
                 // release device context
                 ReleaseDC(surf, hDC);
@@ -556,8 +554,8 @@ bool GrapplePayloadArea::Redraw2D(const int event, const SURFHANDLE surf)
     const XRGrappleTargetVessel *pGrappleTargetVessel = GetXR1().GetGrappleTargetVessel(GetXR1().m_grappleTargetVesselName);  // pulls cached object w/updated distance, delta-V, etc. (this logic is in the framework classes)
 
     // obtain device context and save existing font
-    HDC hDC = GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_hFont);
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_hFont);  // HFONT counterpart
 
     SetBkMode(hDC, TRANSPARENT);
     SetTextColor(hDC, CREF(LIGHT_YELLOW));  // use CREF macro to convert to Windows' Blue, Green, Red COLORREF
@@ -633,8 +631,8 @@ bool GrapplePayloadArea::Redraw2D(const int event, const SURFHANDLE surf)
 
         // SLOTS OCCUPIED
         textY += pitch;
-        VECTOR3 slots = grappleTargetPCD.GetSlotsOccupied();  
-        sprintf(msg, "%.1f L x %.1f W x %.1f H", slots.z, slots.x, slots.y); 
+        VECTOR3 slotsOccupied = grappleTargetPCD.GetSlotsOccupied();  // renamed: slots is a Qt macro
+        sprintf(msg, "%.1f L x %.1f W x %.1f H", slotsOccupied.z, slotsOccupied.x, slotsOccupied.y);  // renamed: slots is a Qt macro
         TextOut(hDC, 98, textY, msg, static_cast<int>(strlen(msg)));
     }
     else

@@ -26,7 +26,7 @@
 // Custom instrument panels for the XR2
 // ==============================================================
 
-#include "OrbiterSDK.h"
+#include "Orbitersdk.h"
 #include "resource.h"
 #include "XR2AreaIDs.h"
 

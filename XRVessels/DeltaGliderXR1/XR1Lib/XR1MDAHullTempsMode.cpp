@@ -25,6 +25,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1MultiDisplayArea.h"
+#include "XRGdi.h"  // not upstream: GDI counterparts on QPainter
 
 // Note: as of D3D9 RC23 there is no difference in framerate between sketchpad and GetDC on this 
 // MDA area. In addition, the font control isn't quite as precise under sketchpad (FF_MODERN fonts looks a lot
@@ -109,8 +110,8 @@ bool HullTempsMultiDisplayMode::Redraw2D(const int event, const SURFHANDLE surf)
     // but unfortunately we can't do that here since we are rendering on top of a background that we blitted.
 
     // obtain device context and save existing font
-    HDC hDC = m_pParentMDA->GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_pKfcFont);
+    QPainter *hDC = m_pParentMDA->GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_pKfcFont);  // HFONT counterpart
 
     // render our K/F/C button temp label if necessary
     SetBkMode(hDC, TRANSPARENT);

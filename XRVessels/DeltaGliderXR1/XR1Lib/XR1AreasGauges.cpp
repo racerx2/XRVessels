@@ -22,6 +22,7 @@
 // must be included BEFORE XR1Areas.h
 #include "DeltaGliderXR1.h"
 #include "XR1Areas.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
 
 //----------------------------------------------------------------------------------
 
@@ -324,7 +325,7 @@ bool AnalogGaugeArea::Redraw2D(const int event, const SURFHANDLE surf)
     if (forceRedraw || (fabs(dialAngle - m_lastIndicatorAngle) > eps))
     {
         oapiBltPanelAreaBackground(GetAreaID(), surf);
-        HDC hDC = GetDC(surf);
+        QPainter *hDC = GetDC(surf);  // HDC counterpart
         DrawNeedle(hDC, 28, 28, 26.0, dialAngle);
         ReleaseDC(surf, hDC);
         retVal = true;
@@ -335,7 +336,7 @@ bool AnalogGaugeArea::Redraw2D(const int event, const SURFHANDLE surf)
 
 // angle = needle angle
 // speed = how fast the dial moves in radians per second.  Default = PI radians per second, or 180 degrees per second
-void AnalogGaugeArea::DrawNeedle(HDC hDC, int x, int y, double rad, double angle, double speed)
+void AnalogGaugeArea::DrawNeedle(QPainter *hDC, int x, int y, double rad, double angle, double speed)  // HDC counterpart
 {
     // handle needle response delay
     double dt = oapiGetSimStep();  // delta time since last frame
@@ -350,7 +351,7 @@ void AnalogGaugeArea::DrawNeedle(HDC hDC, int x, int y, double rad, double angle
     m_lastIndicatorAngle = angle;
 
     double dx = rad * cos(angle), dy = rad * sin(angle);
-    HGDIOBJ oldObject = SelectObject(hDC, m_pen1);
+    XRGdiObj oldObject = SelectObject(hDC, m_pen1);  // HGDIOBJ counterpart
     MoveToEx(hDC, x, y, 0);
     LineTo(hDC, x + static_cast<int>(0.85 * dx + 0.5), y - static_cast<int>(0.85 * dy + 0.5));
 

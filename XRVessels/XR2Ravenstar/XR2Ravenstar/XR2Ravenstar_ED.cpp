@@ -30,29 +30,29 @@
 #include "ScnEditorAPI.h"
 #include "DlgCtrl.h"
 #include "XR1PayloadDialog.h"
+#include "OrbiterResource.h"  // not upstream: Qt dialog helpers (oapiConnectDlgCommands)
 
 // ==============================================================
 // Scenario editor interface
 // ==============================================================
 
-XR2Ravenstar *GetDG (HWND hDlg)
+XR2Ravenstar *GetDG (QWidget *hDlg)  // HWND -> QWidget *
 {
     // retrieve DG interface from scenario editor
     OBJHANDLE vessel;
-    SendMessage (hDlg, WM_SCNEDITOR, SE_GETVESSEL, reinterpret_cast<LPARAM>(&vessel));
+    ScnEditorMsg (hDlg, SE_GETVESSEL, reinterpret_cast<LPARAM>(&vessel));  // SendMessage WM_SCNEDITOR counterpart
     return static_cast<XR2Ravenstar *>(oapiGetVesselInterface (vessel));
 }
 
 // --------------------------------------------------------------
 // Message procedure for editor page 1 (animation settings)
 // --------------------------------------------------------------
-INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void EdPg1Proc (QWidget *hTab, void *context)  // DLGPROC -> DLGINIT
 {
+    oapiConnectDlgCommands (hTab, [hTab](int id, int code, QWidget *hCtrl) {  // WM_COMMAND counterpart
     BOOL retVal = FALSE;
 
-    switch (uMsg) 
-    {
-    case WM_COMMAND:
+    {  // switch (uMsg) case WM_COMMAND counterpart
         XR2Ravenstar *pXR = static_cast<XR2Ravenstar *>(GetDG(hTab));
         // save the original APU state so we can restore it later
         DoorStatus orgAPUState = pXR->apu_status;
@@ -60,7 +60,7 @@ INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
         // hotwire the apu to ON so we can move the doors by "cheating" here
         pXR->apu_status = DoorStatus::DOOR_OPEN;
 
-        switch (LOWORD (wParam)) 
+        switch (id)  // LOWORD(wParam) counterpart
         {
         /* NO ONLINE HEP
         case IDHELP:
@@ -174,23 +174,23 @@ INT_PTR CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
         // restore original APU state
         pXR->apu_status = orgAPUState;
 
-        break;
     }
 
-    return retVal;
+    (void)retVal;  // return retVal: DLGPROC result, no DLGINIT counterpart
+    });  // end of WM_COMMAND counterpart
 }
 
 // --------------------------------------------------------------
 // Add vessel-specific pages into scenario editor
 // --------------------------------------------------------------
-DLLCLBK void secInit (HWND hEditor, OBJHANDLE vessel)
+DLLCLBK void secInit (QWidget *hEditor, OBJHANDLE vessel)  // HWND -> QWidget *
 {
     XR2Ravenstar *dg = static_cast<XR2Ravenstar *>(oapiGetVesselInterface (vessel));
     
     EditorPageSpec eps1 = {"Animations", g_hDLL, IDD_EDITOR_PG1, EdPg1Proc};
-    SendMessage (hEditor, WM_SCNEDITOR, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps1));
+    ScnEditorMsg (hEditor, SE_ADDPAGEBUTTON, reinterpret_cast<LPARAM>(&eps1));  // SendMessage WM_SCNEDITOR counterpart
 
     // payload page
     EditorFuncSpec efs = { "Payload", XR1PayloadDialog::EditorFunc};
-    SendMessage (hEditor, WM_SCNEDITOR, SE_ADDFUNCBUTTON, reinterpret_cast<LPARAM>(&efs));
+    ScnEditorMsg (hEditor, SE_ADDFUNCBUTTON, reinterpret_cast<LPARAM>(&efs));  // SendMessage WM_SCNEDITOR counterpart
 }

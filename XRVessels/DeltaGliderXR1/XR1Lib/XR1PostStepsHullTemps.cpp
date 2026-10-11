@@ -24,6 +24,7 @@
 #include "resource.h"
 
 #include "XR1PostSteps.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 //---------------------------------------------------------------------------
 
@@ -98,7 +99,7 @@ void SetHullTempsPostStep::AddHeat(const double simdt)
             double heatConductionPower = ((atmPressure - minHeatConductionPressure) / (maxHeatConductionPressure - minHeatConductionPressure));  // from 0.0 to 1.0 (higher number = more heat dropped due to conduction)
             if (heatConductionPower > 1.0)
                 heatConductionPower = 1.0;   // never add extra heat if atmPressure > maxHeatConductionPressure
-            _ASSERTE(heatConductionPower >= 0.0);
+            assert(heatConductionPower >= 0.0);  // _ASSERTE counterpart
 
             heatConductionFraction = 1.0 - (maxHeatConductionFraction * heatConductionPower);
             // cannot use due to tiny rounding error at boundary: _ASSERTE(heatConductionFraction >= minHeatConductionFraction);

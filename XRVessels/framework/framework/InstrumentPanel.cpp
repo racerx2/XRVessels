@@ -79,7 +79,7 @@ void InstrumentPanel::Deactivate()
 
         // free our bitmap, if any
         if (m_hBmp != nullptr)
-            DeleteObject(m_hBmp);
+            m_hBmp = nullptr;   // DeleteObject left out: oapiRegisterPanelBackground took the QImage and Orbiter deletes it (a second delete would double-free)
 
         SetActive(false);   // panel deactivated now
     }

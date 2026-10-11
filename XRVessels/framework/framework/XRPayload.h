@@ -30,9 +30,10 @@
 #include "stringhasher.h"
 #include <string>
 #include <unordered_map>
+#include <cstring>        // not upstream: windows.h brought it in
 #include <vector>
 
-using namespace stdext;
+// using namespace stdext left out: MSVC-only namespace
 using namespace std;
 
 // define externs explicitly so we aren't tied to a specific XR-class vessel
@@ -83,7 +84,7 @@ public:
     bool IsXRConsumableTank() const          { return m_isXRConsumableTank; }
     double GetMass() const                   { return m_mass; }
     const VECTOR3 &GetGroundDeploymentAdjustment() const { return m_groundDeploymentAdjustment; }
-    HBITMAP GetThumbnailBitmapHandle() const { return m_hThumbnailBitmap; }  // may be null
+    QImage *GetThumbnailBitmapHandle() const { return m_hThumbnailBitmap; }  // may be null
     
     // operator overloading
     bool operator==(const XRPayloadClassData &that) const { return (strcmp(m_pClassname, that.m_pClassname) == 0); }  // vessel classnames are unique
@@ -95,7 +96,7 @@ protected:
     VECTOR3 m_dimensions;       // width (X), height (Y), length (Z)
     VECTOR3 m_slotsOccupied;    // width (X), height (Y), length (Z)
     VECTOR3 m_primarySlotCenterOfMassOffset;  // X,Y,Z
-    HBITMAP m_hThumbnailBitmap; // will be nullptr if bitmap is no defined or is invalid
+    QImage *m_hThumbnailBitmap; // will be nullptr if bitmap is no defined or is invalid
     HASHMAP_STR_VECINT m_explicitAttachmentSlotsMap;   // key=vessel classname, value=list of ship bay slots to which this object may attach (assuming sufficient room).    
     bool m_isXRPayloadEnabled;  // true if this vessel is enabled for docking in the bay, false otherwise
     bool m_isXRConsumableTank;  // true if this vessel contains XR fuel consumable by the parent ship.

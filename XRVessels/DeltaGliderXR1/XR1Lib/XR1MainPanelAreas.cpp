@@ -626,7 +626,7 @@ bool AFCtrlArea::Redraw2D(const int event, const SURFHANDLE surf)
     if ((GetXR1().apu_status != DoorStatus::DOOR_OPEN) && (GetVessel().GetADCtrlMode() != 0))
         return false;       // don't paint the "jumping" switch
 
-    DeltaGliderXR1::SafeBlt(surf, m_mainSurface, 0, 0, min(GetVessel().GetADCtrlMode(), 2) * 40, 0, 40, 44);
+    DeltaGliderXR1::SafeBlt(surf, m_mainSurface, 0, 0, std::min<DWORD>(GetVessel().GetADCtrlMode(), 2) * 40, 0, 40, 44);  // windows.h min macro counterpart
 
     return true;
 }
@@ -640,7 +640,7 @@ bool AFCtrlArea::Redraw3D(const int event, const SURFHANDLE surf)
     if ((GetXR1().apu_status != DoorStatus::DOOR_OPEN) && (GetVessel().GetADCtrlMode() != 0))
         return false;       // don't paint the "jumping" switch
 
-    GetXR1().SetXRAnimation(GetXR1().anim_afdial, min(GetVessel().GetADCtrlMode(), 2) * 0.5);
+    GetXR1().SetXRAnimation(GetXR1().anim_afdial, std::min<DWORD>(GetVessel().GetADCtrlMode(), 2) * 0.5);  // windows.h min macro counterpart
 
     return true;
 }
@@ -652,7 +652,7 @@ bool AFCtrlArea::ProcessMouseEvent(const int event, const int mx, const int my)
         return false;
 
     bool retVal = false;
-    int mode = min(GetVessel().GetADCtrlMode(), 2);
+    int mode = std::min<DWORD>(GetVessel().GetADCtrlMode(), 2);  // windows.h min macro counterpart
 
     int newMode = -1;
     if (event & PANEL_MOUSE_LBDOWN)

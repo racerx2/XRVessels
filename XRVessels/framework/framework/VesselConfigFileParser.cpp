@@ -25,6 +25,9 @@
 // ==============================================================
 
 #include "VesselConfigFileParser.h"
+#include <cstdio>
+#include <filesystem>   // not upstream: PathFileExists counterpart
+#include "OrbiterAPI.h"   // not upstream: oapiResolvePath
 
 // Constructor
 // pFilename = path to config file; may be relative to Orbiter root or absolute
@@ -50,21 +53,21 @@ bool VesselConfigFileParser::ParseVesselConfig(const char *pVesselName)
 {
     SetLogPrefix(pVesselName);
     
-    m_csOverrideFilename.Format("Config\\%s.xrcfg", pVesselName);  // e.g., "Config\XR5-01.xrcfg"
-    const BOOL overrideFileExists = PathFileExists(m_csOverrideFilename);
+    char buf[1024]; snprintf(buf, sizeof(buf), "Config\\%s.xrcfg", pVesselName); m_csOverrideFilename = buf;  // e.g., "Config\XR5-01.xrcfg"
+    const bool overrideFileExists = std::filesystem::exists(oapiResolvePath(m_csOverrideFilename.c_str()));   // PathFileExists counterpart; BOOL -> bool
 
     if (overrideFileExists)
-        m_csConfigFilenames.Format("%s + %s", GetDefaultFilename(), GetOverrideFilename());
+        { snprintf(buf, sizeof(buf), "%s + %s", GetDefaultFilename(), GetOverrideFilename()); m_csConfigFilenames = buf; }   // CString::Format counterpart
     else
     {
-        m_csConfigFilenames.Format("%s (no override found [%s])", GetDefaultFilename(), GetOverrideFilename());
-        m_csOverrideFilename.Empty();  // empty the filename to indicate it does not exist
+        snprintf(buf, sizeof(buf), "%s (no override found [%s])", GetDefaultFilename(), GetOverrideFilename()); m_csConfigFilenames = buf;   // CString::Format counterpart
+        m_csOverrideFilename.clear();  // empty the filename to indicate it does not exist
     }
 
     // log the filenames
-    CString csTemp;
-    csTemp.Format("Using configuration file(s): %s", GetConfigFilenames());
-    WriteLog(csTemp);
+    std::string csTemp;
+    snprintf(buf, sizeof(buf), "Using configuration file(s): %s", GetConfigFilenames()); csTemp = buf;   // CString::Format counterpart
+    WriteLog(csTemp.c_str());
 
     // parse the default config file first
     bool retVal = ParseFile();  // ignore error here (any errors were already logged)

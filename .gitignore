@@ -6,3 +6,5 @@
 **/x64/
 /dist/out/
 **/*.aps
+out/
+CMakeUserPresets.json

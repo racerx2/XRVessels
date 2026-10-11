@@ -21,6 +21,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1HUD.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
 
 // ==============================================================
 
@@ -109,7 +110,7 @@ bool PopupHUDArea::Redraw2D(const int event, const SURFHANDLE surf)
 
     if (m_topYCoordinate < m_height) // is HUD not OFF; i.e., is the top of the HUD visible?
     {
-        HDC hDC = GetDC(surf);
+        QPainter *hDC = GetDC(surf);  // HDC counterpart
 
         // only render the HUD frame if we have not already rendered it at this topY coordinate OR if this is PANEL_REDRAW_INIT
         bool forceRender = (event == PANEL_REDRAW_INIT) || (m_lastRenderedTopYCoordinate != m_topYCoordinate);  // if frame has moved, we MUST re-render everything
@@ -126,7 +127,7 @@ bool PopupHUDArea::Redraw2D(const int event, const SURFHANDLE surf)
             retVal = true;  // must always render this frame
 
             // render the HUD frame, starting at the bottom-left corner
-            HPEN prevPen = (HPEN)SelectObject(hDC, m_pen0);   // save previous pen
+            QPen *prevPen = (QPen *)SelectObject(hDC, m_pen0);   // save previous pen; HPEN counterpart
 
             // NOTE: LineTo draws up to, but not INCLUDING, the specified point
             // Also, it appears as though the FIRST POINT under MoveToEx is not drawn, either

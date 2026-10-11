@@ -75,5 +75,5 @@ extern const DamageItem D_END;
 // ==============================================================
 // Global callback prototypes 
 
-INT_PTR CALLBACK XR5Ctrl_DlgProc(HWND, UINT, WPARAM, LPARAM);
+void XR5Ctrl_DlgProc(QWidget *hDlg, void *context);   // DLGPROC -> DLGINIT
 

@@ -28,11 +28,15 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "XRTemplates.h"
 
 #include "InstrumentPanel.h"
 #include "PrePostStep.h"
+#include <cassert>
+#include <ctime>              // not upstream: GetLocalTime counterpart
+#include <QGuiApplication>    // not upstream: FindWindow counterpart
+#include <QWindow>
 
 // constructor
 VESSEL3_EXT::VESSEL3_EXT(OBJHANDLE vessel, int fmodel) :
@@ -76,6 +80,17 @@ VESSEL3_EXT::~VESSEL3_EXT()
     }
 }
 
+// not upstream: was inline in Vessel3Ext.h as FindWindow("Orbiter Render Window"); the render window is the Vulkan top-level window
+QWindow *VESSEL3_EXT::GetOrbiterRenderWindowHandle()
+{
+    for (QWindow *pWindow : QGuiApplication::topLevelWindows())
+    {
+        if (pWindow->surfaceType() == QSurface::VulkanSurface)
+            return pWindow;
+    }
+    return nullptr;
+}
+
 // Add a new instrument panel to our map of panels
 // Note: panelWidth must be zero for VC panels
 void VESSEL3_EXT::AddInstrumentPanel(InstrumentPanel *pPanel, const int panelWidth)
@@ -85,9 +100,9 @@ void VESSEL3_EXT::AddInstrumentPanel(InstrumentPanel *pPanel, const int panelWid
     // sanity check
 #ifdef _DEBUG
     if (panelID >= GetVCPanelIDBase()) // is this a VC panel?
-        _ASSERTE(panelWidth == 0);
+        assert(panelWidth == 0);
     else  // this is a 2D panel
-        _ASSERTE(panelWidth > 0);
+        assert(panelWidth > 0);
 #endif
 
     // compute the panel hash
@@ -126,7 +141,7 @@ InstrumentPanel *VESSEL3_EXT::GetInstrumentPanel(const int panelNumber)
     if (it != m_panelMap.end())
         retVal = it->second;     // found a matching panel
     
-    _ASSERTE(retVal != nullptr);
+    assert(retVal != nullptr);
     return retVal;
 }
 
@@ -264,7 +279,7 @@ int VESSEL3_EXT::Get2DPanelWidth()
         }
     }
 
-    _ASSERTE(m_last2DPanelWidth > 0);  // make sure we set the value
+    assert(m_last2DPanelWidth > 0);  // make sure we set the value
 
     return m_last2DPanelWidth;  // this is the active 2D panel width
 }
@@ -678,10 +693,9 @@ void VESSEL3_EXT::GetStatusSafe(const VESSEL &vessel, VESSELSTATUS2 &status, con
 // month=1-12, day=1-31
 bool VESSEL3_EXT::IsToday(WORD wMonth, WORD wDay)  
 {
-    SYSTEMTIME st;
-    GetLocalTime(&st);
+    timespec ts; clock_gettime(CLOCK_REALTIME, &ts); tm st; localtime_r(&ts.tv_sec, &st);   // GetLocalTime counterpart
 
-    return ((wMonth == st.wMonth) && (wDay == st.wDay));
+    return ((wMonth == st.tm_mon + 1) && (wDay == st.tm_mday));   // SYSTEMTIME wMonth is 1-12
 }
 
 // Set a mesh group visible or invisible
@@ -717,9 +731,9 @@ void VESSEL3_EXT::SetMeshGroupVisible(DEVMESHHANDLE hMesh, DWORD dwMeshGroup, bo
 // Returns the # of fuel tanks in the vessel
 int VESSEL3_EXT::ResetAllFuelLevels(VESSEL *pVessel, const double levelFrac)
 {
-    _ASSERTE(pVessel != nullptr);
-    _ASSERTE(levelFrac >= 0);
-    _ASSERTE(levelFrac <= 1.0);
+    assert(pVessel != nullptr);
+    assert(levelFrac >= 0);
+    assert(levelFrac <= 1.0);
 
     DWORD dwPropCount = pVessel->GetPropellantCount();
     for (DWORD i = 0; i < dwPropCount; i++)
@@ -763,9 +777,9 @@ bool VESSEL3_EXT::GetLandingTargetInfo(double &distanceOut, char * const pBaseNa
 // Note: level may be outside range of 0..1; this is not an error, but it will be limited to between 0 and 1.
 float VESSEL3_EXT::ComputeVariableVolume(const double minVolume, const double maxVolume, double level)
 {
-    _ASSERTE(minVolume >= 0);
-    _ASSERTE(maxVolume <= 1.0);
-    _ASSERTE(minVolume <= maxVolume);
+    assert(minVolume >= 0);
+    assert(maxVolume <= 1.0);
+    assert(minVolume <= maxVolume);
 
     if (level < 0)
         level = 0;

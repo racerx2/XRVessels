@@ -28,7 +28,7 @@
 #include "XR1PreSteps.h"
 #include "XR1PostSteps.h"
 #include "XR1FuelPostSteps.h"
-#include "XR1AnimationPoststep.h"
+#include "XR1AnimationPostStep.h"
 
 // --------------------------------------------------------------
 // Set vessel class parameters

@@ -31,7 +31,7 @@
 #include "XR1PreSteps.h"
 #include "XR1PostSteps.h"
 #include "XR1FuelPostSteps.h"
-#include "XR1AnimationPoststep.h"
+#include "XR1AnimationPostStep.h"
 #include "XR5PreSteps.h"
 #include "XR5PostSteps.h"
 #include "XRPayload.h"

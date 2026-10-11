@@ -21,6 +21,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1HUD.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
 
 // ==============================================================
 
@@ -116,7 +117,7 @@ void TertiaryHUDArea::SetHUDColors()
 // NOTE: the subclass MUST draw text from the supplied topY coordinate (plus some border gap space)
 // The X coordinate is zero @ the border
 // Returns: true if text re-rendered, false if not
-bool TertiaryHUDArea::DrawHUD(const int event, const int topY, HDC hDC, COLORREF colorRef, bool forceRender)
+bool TertiaryHUDArea::DrawHUD(const int event, const int topY, QPainter *hDC, COLORREF colorRef, bool forceRender)  // HDC counterpart
 {
     // NOTE: area was registered with PANEL_MAP_BACKGROUND, so we don't need to always repaint it
     // fill the background area if not transparent; this is to make the background solid between letters

@@ -73,7 +73,7 @@ public:
 class XR2UpperInstrumentPanel : public XR2InstrumentPanel
 {
 public:
-    XR2UpperInstrumentPanel::XR2UpperInstrumentPanel(XR2Ravenstar &vessel, const WORD panelResourceID) :
+    XR2UpperInstrumentPanel(XR2Ravenstar &vessel, const WORD panelResourceID) :
         XR2InstrumentPanel(vessel, PANEL_UPPER, panelResourceID)
     {
     }
@@ -124,7 +124,7 @@ protected:
 class XR2PayloadInstrumentPanel1280 : public XR2PayloadInstrumentPanel
 {
 public:
-    XR2PayloadInstrumentPanel1280::XR2PayloadInstrumentPanel1280(XR2Ravenstar &vessel) : 
+    XR2PayloadInstrumentPanel1280(XR2Ravenstar &vessel) : 
         XR2PayloadInstrumentPanel(vessel, IDB_PANEL4_1280)
     {
     }
@@ -163,7 +163,7 @@ public:
 class XR2PayloadInstrumentPanel1600 : public XR2PayloadInstrumentPanel
 {
 public:
-    XR2PayloadInstrumentPanel1600::XR2PayloadInstrumentPanel1600(XR2Ravenstar &vessel) : 
+    XR2PayloadInstrumentPanel1600(XR2Ravenstar &vessel) : 
         XR2PayloadInstrumentPanel(vessel, IDB_PANEL4_1600)
     {
     }
@@ -202,7 +202,7 @@ public:
 class XR2PayloadInstrumentPanel1920 : public XR2PayloadInstrumentPanel
 {
 public:
-    XR2PayloadInstrumentPanel1920::XR2PayloadInstrumentPanel1920(XR2Ravenstar &vessel) : 
+    XR2PayloadInstrumentPanel1920(XR2Ravenstar &vessel) : 
         XR2PayloadInstrumentPanel(vessel, IDB_PANEL4_1920)
     {
     }

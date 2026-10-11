@@ -618,7 +618,7 @@ numpad8c_descent:
             oapiOpenDialogEx (g_hDLL, IDD_CTRL, XR1Ctrl_DlgProc, DLG_CAPTIONCLOSE, this);
             return 1;
 
-            typedef INT_PTR(CALLBACK* DLGPROC)(HWND, UINT, WPARAM, LPARAM);
+            typedef void (*DLGPROC)(QWidget *, void *);  // Win32 DLGPROC signature -> DLGINIT
 
         case OAPI_KEY_A:    // toggle APU on/off
             RET_IF_INCAP();

@@ -32,7 +32,7 @@
 // --------------------------------------------------------------
 // Module initialisation
 // --------------------------------------------------------------
-DLLCLBK void InitModule (HINSTANCE hModule)
+DLLCLBK void InitModule (void *hModule)  // HINSTANCE -> dlopen handle
 {
     g_hDLL = hModule;
     oapiRegisterCustomControls(hModule);
@@ -42,7 +42,7 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 // Module cleanup
 // NOTE: this is called even if fast shutdown is enabled.
 // --------------------------------------------------------------
-DLLCLBK void ExitModule (HINSTANCE hModule)
+DLLCLBK void ExitModule (void *hModule)  // HINSTANCE -> dlopen handle
 {
     oapiUnregisterCustomControls(hModule);
 }
@@ -52,7 +52,7 @@ DLLCLBK void ExitModule (HINSTANCE hModule)
 // --------------------------------------------------------------
 DLLCLBK VESSEL *ovcInit (OBJHANDLE vessel, int flightmodel)
 {
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined(_MSC_VER)  // _CrtSetDbgFlag is MSVC CRT only
     // NOTE: _CRTDBG_CHECK_ALWAYS_DF is too slow
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF |
                    _CRTDBG_CHECK_CRT_DF | 

@@ -25,6 +25,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "AreaIDs.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 // Set crossfeed mode main/rcs/off
 // pMsg = mode-specific infomation message; may be null
@@ -55,7 +56,7 @@ void DeltaGliderXR1::SetCrossfeedMode(const XFEED_MODE mode, const char* pMsg)
     }
     else  // invalid mode!  (should never happen)
     {
-        _ASSERTE(false);
+        assert(false);  // _ASSERTE counterpart
         return;
     }
 

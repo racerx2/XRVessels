@@ -31,6 +31,7 @@
 #include "DlgCtrl.h"
 
 #include <stdio.h>
+#include <cassert>  // not upstream: assert for _ASSERTE
 #include "XR2AreaIDs.h"  
 #include "XR2InstrumentPanels.h"
 #include "XR2Globals.h"
@@ -45,7 +46,7 @@
 // --------------------------------------------------------------
 // Module initialisation
 // --------------------------------------------------------------
-DLLCLBK void InitModule (HINSTANCE hModule)
+DLLCLBK void InitModule (void *hModule)  // HINSTANCE -> dlopen handle
 {
     g_hDLL = hModule;
     oapiRegisterCustomControls(hModule);
@@ -55,7 +56,7 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 // Module cleanup
 // NOTE: this is called even if fast shutdown is enabled.
 // --------------------------------------------------------------
-DLLCLBK void ExitModule (HINSTANCE hModule)
+DLLCLBK void ExitModule (void *hModule)  // HINSTANCE -> dlopen handle
 {
     oapiUnregisterCustomControls(hModule);
     XRPayloadClassData::Terminate();     // clean up global cache
@@ -66,7 +67,7 @@ DLLCLBK void ExitModule (HINSTANCE hModule)
 // --------------------------------------------------------------
 DLLCLBK VESSEL *ovcInit (OBJHANDLE vessel, int flightmodel)
 {
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined(_MSC_VER)  // _CrtSetDbgFlag is MSVC CRT only
     // NOTE: _CRTDBG_CHECK_ALWAYS_DF is too slow
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF |
                    _CRTDBG_CHECK_CRT_DF | 
@@ -394,7 +395,7 @@ void XR2Ravenstar::ApplyElevatorAreaChanges()
 DWORD XR2Ravenstar::MeshTextureIDToTextureIndex(const int meshTextureID, MESHHANDLE &hMesh)
 {
     // sanity check
-    _ASSERTE(meshTextureID > VCPANEL_TEXTURE_NONE);
+    assert(meshTextureID > VCPANEL_TEXTURE_NONE);  // _ASSERTE -> assert
 
     DWORD retVal = 0;
 #if 0   // {YYY} implement this method when the VC is implemented
@@ -416,14 +417,14 @@ DWORD XR2Ravenstar::MeshTextureIDToTextureIndex(const int meshTextureID, MESHHAN
         break;
 
     default:   // should never happen!
-        _ASSERTE(false);
+        assert(false);  // _ASSERTE -> assert
         // fall through with retVal 0
         break;
     }
 
      // validate return values
-    _ASSERTE(retVal >= 0);
-    _ASSERTE(hMesh != nullptr);
+    assert(retVal >= 0);  // _ASSERTE -> assert
+    assert(hMesh != nullptr);  // _ASSERTE -> assert
 #endif
     return retVal;
 }

@@ -37,6 +37,8 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1UpperPanelAreas.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
+#include <algorithm>  // not upstream: std::min
 
 //----------------------------------------------------------------------------------
 
@@ -345,14 +347,14 @@ bool ScramTempGaugeArea::Redraw2D(const int event, const SURFHANDLE surf)
     static const double rad = 19.0;
     int i, j, x0, y0, dx, dy;
     
-    HDC hDC = GetDC(surf);
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
     SelectObject(hDC, m_pen0);
     for (j = 0; j < 3; j++) 
     {
         for (i = 0; i < 2; i++)
         {
             T = GetXR1().ramjet->Temp(i, j);
-            phi = PI * min(T,7800.0)/4000.0;   // matches new engines
+            phi = PI * std::min(T,7800.0)/4000.0;   // matches new engines; std::min for the windows.h macro
             dx = static_cast<int>(rad*sin(phi));
             dy = static_cast<int>(rad*cos(phi));
             // {YYY} resolve this for the XR2
@@ -509,8 +511,8 @@ void CrewDisplayArea::Deactivate()
 bool CrewDisplayArea::Redraw2D(const int event, const SURFHANDLE surf)
 {
     // obtain device context and save existing font
-    HDC hDC = GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_font); // will render status text first
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_font); // will render status text first; HFONT counterpart
     SetBkMode(hDC, TRANSPARENT);
     SetTextAlign(hDC, TA_LEFT);  // set to LEFT alignment
 
@@ -578,7 +580,7 @@ bool CrewDisplayArea::Redraw2D(const int event, const SURFHANDLE surf)
     int yCoord = 2;
     SetTextColor(hDC, CREF(OFF_WHITE217));
     sprintf(temp, "%s (%s)", pName, pAge);
-    TextOut(hDC, xCoord, yCoord, temp, min(static_cast<int>(strlen(temp)), maxNameLineLength)); // limit line length
+    TextOut(hDC, xCoord, yCoord, temp, std::min(static_cast<int>(strlen(temp)), maxNameLineLength)); // limit line length; std::min for the windows.h macro
     
     yCoord += fontPitch;
     TextOut(hDC, xCoord, yCoord, pRank, static_cast<int>(strlen(pRank)));  

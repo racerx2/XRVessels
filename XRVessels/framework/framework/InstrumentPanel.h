@@ -27,7 +27,7 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "Component.h"
 #include "AreaGroup.h"
 
@@ -72,7 +72,7 @@ protected:
     VESSEL3_EXT &m_vessel;
     int m_panelID;      // globally unique panel ID; also serves as Orbiter 2D panel ID
     int m_vcPanelID;    // Orbiter VC panel ID, or < 0 if this is a 2D panel
-    HBITMAP m_hBmp;     // 2D bitmap resource, if any
+    QImage *m_hBmp;     // 2D bitmap resource, if any
     bool m_isActive;    // true if panel is activated, false if deactivated
     const bool m_force3DRedrawTo2D;  // if true, all area redraw calls in 3D (virtual cockpit) mode will invoke Redraw2D instead of Redraw3D
 

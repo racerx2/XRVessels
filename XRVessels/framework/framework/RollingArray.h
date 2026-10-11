@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <crtdbg.h>   // for _ASSERTE
+#include <cassert>   // crtdbg.h left out: assert stands in for _ASSERTE
 
 class RollingArray
 {
@@ -62,7 +62,7 @@ public:
         if (sampleCount == 0)   // no data yet?
         {
             // this is likely a program bug!!
-            _ASSERTE(false);
+            assert(false);
             return 0;  // try to continue
         }
 
@@ -74,7 +74,7 @@ public:
     {
         if (GetSampleCount() < 1)
         {
-            _ASSERTE(false);  // program bug!  no data in array yet
+            assert(false);  // program bug!  no data in array yet
             return 0;   // try to continue
         }
 
@@ -89,7 +89,7 @@ public:
     {
         if (GetSampleCount() < 1)
         {
-            _ASSERTE(false);  // program bug!  no data in array yet
+            assert(false);  // program bug!  no data in array yet
             return 0;   // try to continue
         }
 

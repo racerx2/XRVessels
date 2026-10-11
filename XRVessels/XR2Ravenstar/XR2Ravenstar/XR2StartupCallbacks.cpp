@@ -25,10 +25,11 @@
 #include "XR1PreSteps.h"
 #include "XR1PostSteps.h"
 #include "XR1FuelPostSteps.h"
-#include "XR1AnimationPoststep.h"
+#include "XR1AnimationPostStep.h"
 
 #include "XR2PreSteps.h"
 #include "XR2PostSteps.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 static XR2Ravenstar* s_pVessel;   // initialized right before our callback is invoked
 
@@ -129,7 +130,7 @@ void XR2Ravenstar::clbkSetClassCaps(FILEHANDLE cfg)
 
     default:
         // should never happen!
-        _ASSERTE(false);
+        assert(false);  // _ASSERTE -> assert
         // use default config
         max_rocketfuel = TANK1_CAPACITY;
         max_scramfuel = TANK2_CAPACITY;

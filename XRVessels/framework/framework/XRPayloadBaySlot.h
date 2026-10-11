@@ -27,11 +27,11 @@
 #pragma once
 
 #include "XRPayloadBay.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include <unordered_map>
 #include <vector>
 
-using namespace stdext;
+// using namespace stdext left out: MSVC-only namespace
 
 class XRPayloadBaySlot;
 

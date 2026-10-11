@@ -30,7 +30,7 @@
 #include "PropType.h"  // for enum
 #include <unordered_map>
 
-using namespace stdext;
+// using namespace stdext left out: MSVC-only namespace
 
 // dummy vessel classname
 #define XRPAYLOAD_BAY_CLASSNAME  "XRPayloadBay"

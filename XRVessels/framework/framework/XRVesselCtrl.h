@@ -35,7 +35,10 @@
 
 #pragma once
 
-#include "orbitersdk.h"
+#include <dlfcn.h>   // not upstream: GetModuleHandle/GetProcAddress counterparts
+#include <string>
+
+#include "Orbitersdk.h"
 #include <vector>
 
 using namespace std;
@@ -328,13 +331,14 @@ public:
         // Since we can't rely on RTTI here to test vessel objects that do not contain RTTI, we instead check 
         // the status of an exported XRVesselCtrlFlag, if any.
         bool retVal = false;  // assume not XRVesselCtrl
-        const HMODULE hDLL = GetModuleHandle(pVessel->GetClassName());  // should always succeed
+        const std::string modulePath = std::string("Modules/") + pVessel->GetClassName() + ".so";  // GetModuleHandle counterpart: the module Orbiter loaded for this class
+        void *const hDLL = dlopen(modulePath.c_str(), RTLD_NOW | RTLD_NOLOAD);
         if (hDLL != nullptr)
         {
-            const bool *pFlag = reinterpret_cast<const bool *>(GetProcAddress(hDLL, "XRVesselCtrlFlag"));
+            const bool *pFlag = reinterpret_cast<const bool *>(dlsym(hDLL, "XRVesselCtrlFlag"));
             if (pFlag != nullptr)
                 retVal = *pFlag;  // will be 'true' for vessels that implement XRVesselCtrl
-            // Do not free hDLL handle here! GetModuleHandle does not increment the reference count.
+            dlclose(hDLL);   // RTLD_NOLOAD increments the reference count, unlike GetModuleHandle
         }
         return retVal;
     }

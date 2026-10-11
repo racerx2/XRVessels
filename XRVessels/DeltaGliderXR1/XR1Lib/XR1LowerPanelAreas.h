@@ -30,7 +30,7 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "Area.h"
 #include "XR1Areas.h"
 
@@ -85,8 +85,8 @@ public:
 
 protected:
     // additional resources
-    HBRUSH m_brush2, m_brush3;
-    HPEN m_pen0;
+    QBrush *m_brush2, *m_brush3;
+    QPen *m_pen0;
     DWORD m_color2, m_color3;
 };
 
@@ -112,7 +112,7 @@ public:
     virtual bool Redraw2D(const int event, const SURFHANDLE surf);
 
 protected:
-    HFONT m_mainFont;
+    QFont *m_mainFont;
     int m_lineSpacing;  // pixels between text lines
     bool m_forceRender;
     TextBox *m_pTextBox;
@@ -148,7 +148,7 @@ public:
     virtual bool ProcessMouseEvent(const int event, const int mx, const int my);
 
 protected:
-    HFONT m_font;
+    QFont *m_font;
     COORD2 m_deployButtonCoord;
     COORD2 m_stowAllButtonCoord;
     COORD2 m_prevArrowCoord;

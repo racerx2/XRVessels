@@ -29,7 +29,11 @@
 
 #include "XR5Vanguard.h"
 #include "DlgCtrl.h"
+#include "OrbiterResource.h"  // not upstream: oapiConnectDlgCommands, DlgItem (WM_COMMAND, SendDlgItemMessage counterparts)
+#include <QAbstractButton>  // not upstream: BM_SETCHECK/BM_GETCHECK counterpart
 #include <stdio.h>
+#include <cassert>  // not upstream: assert for _ASSERTE
+#include <cstdint>  // not upstream: UINT32_MAX for MAXDWORD
 
 #include "XR5AreaIDs.h"  
 #include "XR5Globals.h"
@@ -43,7 +47,7 @@
 // --------------------------------------------------------------
 // Module initialisation
 // --------------------------------------------------------------
-DLLCLBK void InitModule (HINSTANCE hModule)
+DLLCLBK void InitModule (void *hModule)  // HINSTANCE -> dlopen handle
 {
     g_hDLL = hModule;
     oapiRegisterCustomControls(hModule);
@@ -52,7 +56,7 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 // --------------------------------------------------------------
 // Module cleanup
 // --------------------------------------------------------------
-DLLCLBK void ExitModule (HINSTANCE hModule)
+DLLCLBK void ExitModule (void *hModule)  // HINSTANCE -> dlopen handle
 {
     oapiUnregisterCustomControls(hModule);
     XRPayloadClassData::Terminate();     // clean up global cache
@@ -63,7 +67,7 @@ DLLCLBK void ExitModule (HINSTANCE hModule)
 // --------------------------------------------------------------
 DLLCLBK VESSEL *ovcInit (OBJHANDLE vessel, int flightmodel)
 {
-#ifdef _DEBUG
+#if defined(_DEBUG) && defined(_MSC_VER)  // _CrtSetDbgFlag is MSVC CRT only
     // NOTE: _CRTDBG_CHECK_ALWAYS_DF is too slow
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF |
                    _CRTDBG_CHECK_CRT_DF | 
@@ -207,12 +211,11 @@ void XR5Vanguard::ReinitializeDamageableControlSurfaces()
 // Message callback function for control dialog box
 // ==============================================================
 
-INT_PTR CALLBACK XR5Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void XR5Ctrl_DlgProc (QWidget *hWnd, void *context)  // DLGINIT; was INT_PTR CALLBACK (HWND, UINT, WPARAM, LPARAM)
 {
-    XR5Vanguard *dg = (uMsg == WM_INITDIALOG ? reinterpret_cast<XR5Vanguard *>(lParam) : reinterpret_cast<XR5Vanguard *>(oapiGetDialogContext(hWnd)));
+    XR5Vanguard *dg = reinterpret_cast<XR5Vanguard *>(context);  // WM_INITDIALOG lParam counterpart
     // pointer to vessel instance was passed as dialog context
     
-    switch (uMsg) {
     /* Note: for some reason Orbiter appears to be trapping keystrokes, so this will not work.
     case WM_KEYDOWN:
         if (wParam == VK_ESCAPE)
@@ -220,111 +223,108 @@ INT_PTR CALLBACK XR5Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
         break;  // pass it on
     */
 
-    case WM_INITDIALOG:
+    // WM_INITDIALOG counterpart: DLGINIT body runs once after the dialog is built
         dg->UpdateCtrlDialog(dg, hWnd);
-        return FALSE;
 
-    case WM_COMMAND:
-        switch (LOWORD(wParam)) {
+    oapiConnectDlgCommands (hWnd, [hWnd, dg](int id, int code, QWidget *hCtrl) {  // WM_COMMAND counterpart
+        switch (id) {  // LOWORD(wParam) counterpart
         case IDCANCEL:
             oapiCloseDialog (hWnd);
-            return TRUE;
+            return;  // return TRUE counterpart
 
         case IDC_GEAR_UP:
             dg->ActivateLandingGear(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_GEAR_DOWN:
             dg->ActivateLandingGear(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_RETRO_CLOSE:
             dg->ActivateRCover(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_RETRO_OPEN:
             dg->ActivateRCover(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_BAY_CLOSE:
             dg->ActivateBayDoors(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_BAY_OPEN:
             dg->ActivateBayDoors(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_OLOCK_CLOSE:
             dg->ActivateOuterAirlock(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_OLOCK_OPEN:
             dg->ActivateOuterAirlock(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_ILOCK_CLOSE:
             dg->ActivateInnerAirlock(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_ILOCK_OPEN:
             dg->ActivateInnerAirlock(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_HOVER_CLOSE:
             dg->ActivateHoverDoors(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_HOVER_OPEN:
             dg->ActivateHoverDoors(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_DOCKING_STOW:
             dg->ActivateNoseCone(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_DOCKING_DEPLOY:
             dg->ActivateNoseCone(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_ELEVATOR_STOW:
             dg->ActivateElevator(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_ELEVATOR_DEPLOY:
             dg->ActivateElevator(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_SCRAM_CLOSE:
             dg->ActivateScramDoors(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_SCRAM_OPEN:
             dg->ActivateScramDoors(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_HATCH_CLOSE:
             dg->ActivateHatch(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_HATCH_OPEN:
             dg->ActivateHatch(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_RADIATOR_STOW:
             dg->ActivateRadiator(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;  // return 0 counterpart
         case IDC_RADIATOR_DEPLOY:
             dg->ActivateRadiator(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;  // return 0 counterpart
 
         case IDC_NAVLIGHT:
-            dg->SetNavlight (SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            return 0;
+            dg->SetNavlight (DlgItem<QAbstractButton>(hWnd, IDC_NAVLIGHT)->isChecked());  // BM_GETCHECK == BST_CHECKED counterpart
+            return;  // return 0 counterpart
         case IDC_BEACONLIGHT:
-            dg->SetBeacon (SendDlgItemMessage (hWnd, IDC_BEACONLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            return 0;
+            dg->SetBeacon (DlgItem<QAbstractButton>(hWnd, IDC_BEACONLIGHT)->isChecked());  // BM_GETCHECK == BST_CHECKED counterpart
+            return;  // return 0 counterpart
         case IDC_STROBELIGHT:
-            dg->SetStrobe (SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            return 0;
+            dg->SetStrobe (DlgItem<QAbstractButton>(hWnd, IDC_STROBELIGHT)->isChecked());  // BM_GETCHECK == BST_CHECKED counterpart
+            return;  // return 0 counterpart
         }
-        break;
-    }
-    return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
+    });  // was break; } return oapiDefDialogProc(...): oapiOpenDialog wires the default dialog behaviour
 }
 
-void XR5Vanguard::UpdateCtrlDialog(XR5Vanguard *dg, HWND hWnd)
+void XR5Vanguard::UpdateCtrlDialog(XR5Vanguard *dg, QWidget *hWnd)  // HWND -> QWidget
 {
-    static int bstatus[2] = {BST_UNCHECKED, BST_CHECKED};
+    static bool bstatus[2] = {false, true};  // BST_UNCHECKED, BST_CHECKED counterpart
     
     if (hWnd == nullptr) 
         hWnd = oapiFindDialog (g_hDLL, IDD_CTRL);
@@ -335,55 +335,55 @@ void XR5Vanguard::UpdateCtrlDialog(XR5Vanguard *dg, HWND hWnd)
     int op;
     
     op = static_cast<int>(dg->gear_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_GEAR_DOWN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_GEAR_UP, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_GEAR_DOWN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_GEAR_UP)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->rcover_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_RETRO_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_RETRO_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_RETRO_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_RETRO_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->bay_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_BAY_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_BAY_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_BAY_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_BAY_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
 
     op = static_cast<int>(dg->olock_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_OLOCK_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_OLOCK_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_OLOCK_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_OLOCK_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->ilock_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_ILOCK_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_ILOCK_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_ILOCK_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_ILOCK_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
 
     op = static_cast<int>(dg->hoverdoor_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_HOVER_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_HOVER_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_HOVER_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_HOVER_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
 
     op = static_cast<int>(dg->nose_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_DOCKING_DEPLOY, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_DOCKING_STOW, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_DOCKING_DEPLOY)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_DOCKING_STOW)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->crewElevator_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_ELEVATOR_DEPLOY, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_ELEVATOR_STOW, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_ELEVATOR_DEPLOY)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_ELEVATOR_STOW)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->scramdoor_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_SCRAM_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_SCRAM_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_SCRAM_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_SCRAM_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
 
     op = static_cast<int>(dg->hatch_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_HATCH_OPEN, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_HATCH_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_HATCH_OPEN)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_HATCH_CLOSE)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->radiator_status) & 1;
-    SendDlgItemMessage (hWnd, IDC_RADIATOR_DEPLOY, BM_SETCHECK, bstatus[op], 0);
-    SendDlgItemMessage (hWnd, IDC_RADIATOR_STOW, BM_SETCHECK, bstatus[1-op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_RADIATOR_DEPLOY)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
+    DlgItem<QAbstractButton>(hWnd, IDC_RADIATOR_STOW)->setChecked(bstatus[1-op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     
     op = static_cast<int>(dg->beacon[0].active) ? 1:0;
-    SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_SETCHECK, bstatus[op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_NAVLIGHT)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     op = static_cast<int>(dg->beacon[3].active) ? 1:0;
-    SendDlgItemMessage (hWnd, IDC_BEACONLIGHT, BM_SETCHECK, bstatus[op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_BEACONLIGHT)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
     op = static_cast<int>(dg->beacon[5].active) ? 1:0;
-    SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_SETCHECK, bstatus[op], 0);
+    DlgItem<QAbstractButton>(hWnd, IDC_STROBELIGHT)->setChecked(bstatus[op]);  // SendDlgItemMessage BM_SETCHECK counterpart
 }
 
 // toggle RCS docking mode
@@ -850,7 +850,7 @@ void XR5Vanguard::DefineMmuAirlock()
 
         default:
             // should never happen!
-            _ASSERTE(false);
+            assert(false);  // _ASSERTE counterpart
             break;
     }
 
@@ -957,8 +957,8 @@ void XR5Vanguard::ApplySkin()
 // hMesh = OUTPUT: will be set to the mesh handle of the mesh associated with meshTextureID.
 DWORD XR5Vanguard::MeshTextureIDToTextureIndex(const int meshTextureID, MESHHANDLE &hMesh)
 {
-    _ASSERTE(false);  // should never reach here!
+    assert(false);  // should never reach here!  (_ASSERTE counterpart)
 
     hMesh = nullptr;      
-    return MAXDWORD;   // bogus
+    return UINT32_MAX;   // bogus  (MAXDWORD counterpart)
 }

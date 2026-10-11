@@ -26,6 +26,20 @@
 //    mgr.ReadRegistryDWORD("X", &xOut);
 
 #include "RegKeyManager.h"
+#include <cassert>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
+#include <QSettings>    // not upstream: values go to Config/XRGlobalSettings.ini instead of the registry
+#include <QString>
+#include <QByteArray>
+#include <QVariant>
+
+// not upstream: registry value name -> INI key; nullptr or "" is the key's default value, '@' as in .reg files
+static QString RegValueKey(const char *pValueName)
+{
+    return (pValueName && *pValueName) ? QString::fromUtf8(pValueName) : QString("@");
+}
 
 // Constructor
 RegKeyManager::RegKeyManager() :
@@ -37,7 +51,7 @@ RegKeyManager::RegKeyManager() :
 RegKeyManager::~RegKeyManager()
 {
     if (m_hKey)
-        RegCloseKey(m_hKey);
+        delete m_hKey;   // RegCloseKey counterpart
 }
 
 // Initialize this object; returns true on success.  No error message box is shown; the caller should handle that.
@@ -46,13 +60,15 @@ RegKeyManager::~RegKeyManager()
 // hOwnerWindow: window that launched us; may be nullptr
 //
 // Should only be called once.
-bool RegKeyManager::Initialize(const HKEY hRootKey, const TCHAR *pSubkeyPath, const HWND hOwnerWindow)
+bool RegKeyManager::Initialize(const char *hRootKey, const char *pSubkeyPath, QWidget *const hOwnerWindow)
 {
-    _ASSERTE(pSubkeyPath);
-    _ASSERTE(!m_bInitialized);
+    assert(pSubkeyPath);
+    assert(!m_bInitialized);
 
     m_hOwnerWindow = hOwnerWindow;
-    m_bInitialized = (RegCreateKeyEx(hRootKey, pSubkeyPath, 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &m_hKey, nullptr) == ERROR_SUCCESS);
+    m_hKey = new QSettings(QString::fromStdString(oapiResolvePath("Config\\XRGlobalSettings.ini")), QSettings::IniFormat);   // RegCreateKeyEx counterpart: the file is created on first write
+    m_hKey->beginGroup(QString::fromUtf8(hRootKey) + "/" + QString::fromUtf8(pSubkeyPath).replace('\\', '/'));   // key path -> INI group
+    m_bInitialized = ((m_hKey->status() == QSettings::NoError) && m_hKey->isWritable());   // KEY_ALL_ACCESS: must be writable
     return m_bInitialized;
 }
 
@@ -60,39 +76,39 @@ bool RegKeyManager::Initialize(const HKEY hRootKey, const TCHAR *pSubkeyPath, co
 // Registry access methods; each returns true on success or false on error. 
 //
 // Writes a registry string value; returns false if error occurs
-bool RegKeyManager::WriteRegistryString(const TCHAR *pValueName, const TCHAR *pValue) const
+bool RegKeyManager::WriteRegistryString(const char *pValueName, const char *pValue) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
     // length includes the trailing zero byte
-    bool bSuccess = (RegSetValueEx(m_hKey, pValueName, 0, REG_SZ, reinterpret_cast<const BYTE *>(pValue), static_cast<DWORD>((_tcslen(pValue) + 1) * sizeof(TCHAR))) == ERROR_SUCCESS);
+    m_hKey->setValue(RegValueKey(pValueName), QString::fromUtf8(pValue));   // RegSetValueEx REG_SZ counterpart
+    m_hKey->sync();
+    bool bSuccess = (m_hKey->status() == QSettings::NoError);
 
 	return bSuccess;
 }
 
 // Reads a registry string value into valueOut; if error occurs (i.e., key does not exist), valueOut is unchanged.
 // Returns false if error occurs
-bool RegKeyManager::ReadRegistryString(const TCHAR *pValueName, CString &valueOut) const
+bool RegKeyManager::ReadRegistryString(const char *pValueName, std::string &valueOut) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
-    DWORD dwType;
-	DWORD dwSize = 0;
 	bool bSuccess = false;
 
     // get the size of the value
-    if (RegQueryValueEx(m_hKey, pValueName, nullptr, &dwType, nullptr, &dwSize) == ERROR_SUCCESS)
+    if (m_hKey->contains(RegValueKey(pValueName)))   // RegQueryValueEx size query counterpart
     {
-        if ((dwType == REG_SZ) && (dwSize > 0))
+        const QVariant value = m_hKey->value(RegValueKey(pValueName));
+        if (value.typeId() != QMetaType::QByteArray)   // REG_SZ check: blobs are stored as @ByteArray; an INI string always has its trailing zero, so no size check
         {
             // now retrieve the actual value
-            BYTE *pBuffer = reinterpret_cast<BYTE *>(valueOut.GetBufferSetLength(dwSize));  // dwSize is in bytes, but we allocate a minimum of n characters anyway in case the string value was stored as a non-Unicode value
-            bSuccess = (RegQueryValueEx(m_hKey, pValueName, nullptr, &dwType, pBuffer, &dwSize) == ERROR_SUCCESS);
-            valueOut.ReleaseBuffer();
+            valueOut = value.toString().toStdString();   // GetBufferSetLength/RegQueryValueEx/ReleaseBuffer counterpart
+            bSuccess = true;
         }
         else
         {
-            SetLastError(ERROR_BAD_LENGTH);
+            errno = EINVAL;   // SetLastError(ERROR_BAD_LENGTH) counterpart
         }
     }
     return bSuccess;
@@ -100,12 +116,14 @@ bool RegKeyManager::ReadRegistryString(const TCHAR *pValueName, CString &valueOu
 
 // writes a blob out to a registry value; shows a messagebox if an error occurs.
 // Returns false if error occurs
-bool RegKeyManager::WriteRegistryBlob(const TCHAR *pValueName, const DATA_BLOB &blob) const
+bool RegKeyManager::WriteRegistryBlob(const char *pValueName, const DATA_BLOB &blob) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
     // length includes the trailing zero byte
-    bool bSuccess = (RegSetValueEx(m_hKey, pValueName, 0, REG_BINARY, blob.pbData, blob.cbData) == ERROR_SUCCESS);
+    m_hKey->setValue(RegValueKey(pValueName), QByteArray(reinterpret_cast<const char *>(blob.pbData), static_cast<qsizetype>(blob.cbData)));   // RegSetValueEx REG_BINARY counterpart
+    m_hKey->sync();
+    bool bSuccess = (m_hKey->status() == QSettings::NoError);
 
     return bSuccess;
 }
@@ -113,26 +131,29 @@ bool RegKeyManager::WriteRegistryBlob(const TCHAR *pValueName, const DATA_BLOB &
 // Reads a blog from the registry into blobOut; if error occurs, blobOut is unchanged.
 // It is the caller's responsibility to eventually invoke LocalFree on blobOut.pbData.
 // Returns false if error occurs.
-bool RegKeyManager::ReadRegistryBlob(const TCHAR *pValueName, DATA_BLOB &blobOut) const
+bool RegKeyManager::ReadRegistryBlob(const char *pValueName, DATA_BLOB &blobOut) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
-    DWORD dwType;
 	bool bSuccess = false;
 
     // get the size of the value
-    if (RegQueryValueEx(m_hKey, pValueName, nullptr, &dwType, nullptr, &blobOut.cbData) == ERROR_SUCCESS)
+    if (m_hKey->contains(RegValueKey(pValueName)))   // RegQueryValueEx size query counterpart
     {
-        if ((dwType == REG_BINARY) && (blobOut.cbData > 0))
+        const QVariant value = m_hKey->value(RegValueKey(pValueName));
+        const QByteArray data = value.toByteArray();
+        blobOut.cbData = static_cast<DWORD>(data.size());
+        if ((value.typeId() == QMetaType::QByteArray) && (blobOut.cbData > 0))   // REG_BINARY check
         {
             // now retrieve the actual value
             // Note: we must use LocalAlloc here since that is what the cryptography functions use when working with DATA_BLOB objects.
-            blobOut.pbData = static_cast<BYTE *>(LocalAlloc(LMEM_FIXED, blobOut.cbData));
-            bSuccess = (RegQueryValueEx(m_hKey, pValueName, nullptr, &dwType, blobOut.pbData, &blobOut.cbData) == ERROR_SUCCESS);
+            blobOut.pbData = static_cast<BYTE *>(malloc(blobOut.cbData));   // LocalAlloc(LMEM_FIXED) counterpart; caller frees with free()
+            memcpy(blobOut.pbData, data.constData(), blobOut.cbData);
+            bSuccess = true;
         }
         else
         {
-            SetLastError(ERROR_BAD_LENGTH);
+            errno = EINVAL;   // SetLastError(ERROR_BAD_LENGTH) counterpart
         }
     }
     return bSuccess;
@@ -140,54 +161,58 @@ bool RegKeyManager::ReadRegistryBlob(const TCHAR *pValueName, DATA_BLOB &blobOut
 
 // Writes a registry DWORD value; shows a messagebox if an error occurs.
 // Returns false if error occurs
-bool RegKeyManager::WriteRegistryDWORD(const TCHAR *pValueName, const DWORD dwValue) const
+bool RegKeyManager::WriteRegistryDWORD(const char *pValueName, const DWORD dwValue) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
     // length includes the trailing zero byte
-    bool bSuccess = (RegSetValueEx(m_hKey, pValueName, 0, REG_DWORD, reinterpret_cast<const BYTE *>(&dwValue), sizeof(DWORD)) == ERROR_SUCCESS);
+    m_hKey->setValue(RegValueKey(pValueName), static_cast<uint>(dwValue));   // RegSetValueEx REG_DWORD counterpart
+    m_hKey->sync();
+    bool bSuccess = (m_hKey->status() == QSettings::NoError);
 
     return bSuccess;
 }
 
 // Reads a registry DWORD value into valueOut; if error occurs (i.e., key does not exist), valueOut is unchanged.
 // Returns false if error occurs
-bool RegKeyManager::ReadRegistryDWORD(const TCHAR *pValueName, DWORD &valueOut) const
+bool RegKeyManager::ReadRegistryDWORD(const char *pValueName, DWORD &valueOut) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
-    DWORD dwType;
-    DWORD dwSize = sizeof(DWORD);
-
-    BYTE *pBuffer = reinterpret_cast<BYTE *>(&valueOut);  
-    const bool bSuccess = (RegQueryValueEx(m_hKey, pValueName, nullptr, &dwType, pBuffer, &dwSize) == ERROR_SUCCESS);
+    bool bSuccess = false;
+    const QVariant value = m_hKey->value(RegValueKey(pValueName));   // RegQueryValueEx counterpart: missing or wider than 32 bits fails
+    const uint dwValue = value.toUInt(&bSuccess);
+    if (bSuccess)
+        valueOut = static_cast<DWORD>(dwValue);
 
     return bSuccess;
 }
 
 // Writes a registry QWORD value; shows a messagebox if an error occurs.
 // Returns false if error occurs
-bool RegKeyManager::WriteRegistryQWORD(const TCHAR *pValueName, const ULONGLONG qwValue) const
+bool RegKeyManager::WriteRegistryQWORD(const char *pValueName, const uint64_t qwValue) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
     // length includes the trailing zero byte
-    bool bSuccess = (RegSetValueEx(m_hKey, pValueName, 0, REG_QWORD, reinterpret_cast<const BYTE *>(&qwValue), sizeof(ULONGLONG)) == ERROR_SUCCESS);
+    m_hKey->setValue(RegValueKey(pValueName), static_cast<qulonglong>(qwValue));   // RegSetValueEx REG_QWORD counterpart
+    m_hKey->sync();
+    bool bSuccess = (m_hKey->status() == QSettings::NoError);
 
     return bSuccess;
 }
 
 // Reads a registry QWORD value into valueOut; if error occurs (i.e., key does not exist), valueOut is unchanged.
 // Returns false if error occurs
-bool RegKeyManager::ReadRegistryQWORD(const TCHAR *pValueName, ULONGLONG &valueOut) const
+bool RegKeyManager::ReadRegistryQWORD(const char *pValueName, uint64_t &valueOut) const
 {
-    _ASSERTE(m_bInitialized);
+    assert(m_bInitialized);
 
-    DWORD dwType;
-    DWORD dwSize = sizeof(ULONGLONG);
-
-    BYTE *pBuffer = reinterpret_cast<BYTE *>(&valueOut);  
-    const bool bSuccess = (RegQueryValueEx(m_hKey, pValueName, nullptr, &dwType, pBuffer, &dwSize) == ERROR_SUCCESS);
+    bool bSuccess = false;
+    const QVariant value = m_hKey->value(RegValueKey(pValueName));   // RegQueryValueEx counterpart: missing value fails
+    const qulonglong qwValue = value.toULongLong(&bSuccess);
+    if (bSuccess)
+        valueOut = static_cast<uint64_t>(qwValue);
 
     return bSuccess;
 }
@@ -198,8 +223,12 @@ bool RegKeyManager::ReadRegistryQWORD(const TCHAR *pValueName, ULONGLONG &valueO
 // pValueName: may be nullptr or empty, in which case the default value for this manager's key is deleted
 // 
 // Returns: error code defined in Winerror.h (ala GetLastError())
-LONG RegKeyManager::DeleteRegistryValue(const TCHAR *pValueName) const
+LONG RegKeyManager::DeleteRegistryValue(const char *pValueName) const
 {
-    return RegDeleteValue(m_hKey, pValueName);
-}
+    if (!m_hKey->contains(RegValueKey(pValueName)))
+        return ENOENT;   // RegDeleteValue's ERROR_FILE_NOT_FOUND (2) counterpart
 
+    m_hKey->remove(RegValueKey(pValueName));   // RegDeleteValue counterpart
+    m_hKey->sync();
+    return ((m_hKey->status() == QSettings::NoError) ? 0 : EIO);   // 0 == ERROR_SUCCESS
+}

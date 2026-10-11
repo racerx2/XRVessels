@@ -31,7 +31,7 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "Area.h"
 #include "XR1Colors.h"
 
@@ -54,7 +54,7 @@ public:
     DeltaGliderXR1 &GetXR1() const { return static_cast<DeltaGliderXR1 &>(GetVessel()); }
 
     // utility methods
-    COLORREF XR1Area::GetTempCREF(const double tempK, double limitK, const DoorStatus doorStatus) const;
+    COLORREF GetTempCREF(const double tempK, double limitK, const DoorStatus doorStatus) const;
     COLORREF GetValueCREF(double value, double warningLimit, double criticalLimit) const;
 
     // static worker methods to convert values
@@ -357,14 +357,14 @@ public:
     virtual bool Redraw2D(const int event, const SURFHANDLE surf);
    
 protected:
-    void DrawNeedle(HDC hDC, int x, int w, double rad, double angle, double speed = 3.0);
+    void DrawNeedle(QPainter *hDC, int x, int w, double rad, double angle, double speed = 3.0);
     // the subclass must hook this to determine the needle angle
     virtual double GetDialAngle() = 0;
 
     // data
     double m_initialAngle;        // angle on initial render, in radians
     double m_lastIndicatorAngle;  // angle in radians
-    HPEN m_pen0, m_pen1;
+    QPen *m_pen0, *m_pen1;
 };
 
 //----------------------------------------------------------------------------------
@@ -458,18 +458,18 @@ public:
             if (m_pBarArea == nullptr)     // no actual render for this object before?
                 return -1;
 
-            _ASSERTE(startingDarkValue <= value);
-            _ASSERTE(value <= maxValue);
+            assert(startingDarkValue <= value);
+            assert(value <= maxValue);
             const double workingValue = ((bp == BARPORTION::DARK) ? value : startingDarkValue);
             double fraction = SAFE_FRACTION(workingValue, maxValue);  // 0...1
             if (fraction > 1.0)
             {
-                _ASSERTE(false);  // code bug
+                assert(false);  // code bug
                 fraction = 1.0;   
             }
             else if (fraction < 0)
             {
-                _ASSERTE(false);  // code bug
+                assert(false);  // code bug
                 fraction = 0;   
             }
 

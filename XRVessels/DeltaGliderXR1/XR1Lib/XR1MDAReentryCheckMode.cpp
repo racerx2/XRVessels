@@ -25,6 +25,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1MultiDisplayArea.h"
+#include "XRGdi.h"  // not upstream: GDI counterparts on QPainter
 
 //-------------------------------------------------------------------------
 
@@ -117,8 +118,8 @@ bool ReentryCheckMultiDisplayMode::Redraw2D(const int event, const SURFHANDLE su
     DeltaGliderXR1::SafeBlt(surf, m_backgroundSurface, 0, 0, 0, 0, screenSize.x, screenSize.y);
 
     // obtain device context and save existing font
-    HDC hDC = m_pParentMDA->GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_mainFont);
+    QPainter *hDC = m_pParentMDA->GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_mainFont);  // HFONT counterpart
 
     SetBkMode(hDC, TRANSPARENT);
     SetTextAlign(hDC, TA_LEFT);

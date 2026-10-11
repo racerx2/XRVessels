@@ -25,6 +25,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1MultiDisplayArea.h"
+#include "XRGdi.h"  // not upstream: GDI counterparts on QPainter
 
 //-------------------------------------------------------------------------
 
@@ -91,8 +92,8 @@ bool DescentHoldMultiDisplayMode::Redraw2D(const int event, const SURFHANDLE sur
     DeltaGliderXR1::SafeBlt(surf, m_backgroundSurface, 0, 0, 0, 0, screenSize.x, screenSize.y);
 
     // obtain device context and save existing font
-    HDC hDC = m_pParentMDA->GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_statusFont); // will render status text first
+    QPainter *hDC = m_pParentMDA->GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_statusFont); // will render status text first; HFONT counterpart
     SetBkMode(hDC, TRANSPARENT);
     SetTextAlign(hDC, TA_LEFT);     // default to LEFT alignment
 

@@ -71,7 +71,7 @@ public:
 
     // Returns the MEAN of all samples in the buffer
     // Throws fatal error if no samples added yet.
-    T Averager<T>::GetMean()
+    T GetMean()   // extra qualification Averager<T>:: left out (MSVC-only)
     {
         if (m_sampleCount == 0)
             throw "Averager.GetMean: no samples in buffer!";
@@ -90,7 +90,7 @@ public:
     // Returns the MEDIAN of all samples in the buffer
     // Throws fatal error if no samples added yet.
     // WARNING: this is relatively expensive with a large sample count.
-    T Averager<T>::GetMedian()
+    T GetMedian()   // extra qualification Averager<T>:: left out (MSVC-only)
     {
         if (m_sampleCount == 0)
             throw "Averager.GetAverage: no samples in buffer!";

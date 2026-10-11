@@ -30,7 +30,8 @@
 #pragma once
 
 #define _CRT_SECURE_NO_DEPRECATE
-#include "windows.h"
+// windows.h left out: the SDK headers and the standard library declare what is used
+#include "XRGdi.h"     // not upstream: QPainter, QFont and COLORREF for Render
 
 #include "XR1Colors.h"
 
@@ -111,7 +112,7 @@ public:
     int GetScreenLineCount() const      { return m_screenLineCount; }
     const TextLineGroup &GetTextLineGroup() const { return m_textLineGroup; }
     
-    virtual bool Render(HDC hDC, int topY, HFONT font, int lineSpacing, bool forceRender, int startingLineNumber = -1);
+    virtual bool Render(QPainter *hDC, int topY, QFont *font, int lineSpacing, bool forceRender, int startingLineNumber = -1);
     
 protected:
     int m_width, m_height;

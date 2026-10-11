@@ -32,6 +32,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1LowerPanelAreas.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
 
 #include <math.h>
 
@@ -281,7 +282,7 @@ bool ArtificialHorizonArea::Redraw2D(const int event, const SURFHANDLE surf)
     // NOTE: invoking oapiClearSurface improves performance for GetDC on the D3D9 client 
     oapiClearSurface (surf, bblue ? m_color3 : m_color2);
 
-    HDC hDC = GetDC (surf);
+    QPainter *hDC = GetDC (surf);  // HDC counterpart
     SelectObject (hDC, GetStockObject (BLACK_PEN));
 
     if (n >= 3)
@@ -458,7 +459,7 @@ bool SystemsDisplayScreen::Redraw2D(const int event, const SURFHANDLE surf)
 
     // invoke new TextBox handler to draw text
     // Note that our text box will never be null here.
-    HDC hDC = GetDC(surf);
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
     
     bool retVal = m_pTextBox->Render(hDC, 0, m_mainFont, m_lineSpacing, (event == PANEL_REDRAW_INIT));  // CWHITE = use transparent background
     
@@ -538,8 +539,8 @@ void TurbopackDisplayArea::Deactivate()
 bool TurbopackDisplayArea::Redraw2D(const int event, const SURFHANDLE surf)
 {
     // obtain device context and save existing font
-    HDC hDC = GetDC(surf);
-    HFONT hPrevObject = (HFONT)SelectObject(hDC, m_font); // will render status text first
+    QPainter *hDC = GetDC(surf);  // HDC counterpart
+    QFont *hPrevObject = (QFont *)SelectObject(hDC, m_font); // will render status text first; HFONT counterpart
     SetBkMode(hDC, TRANSPARENT);
     SetTextAlign(hDC, TA_LEFT);  // set to LEFT alignment
 

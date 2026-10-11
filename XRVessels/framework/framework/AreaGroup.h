@@ -31,7 +31,7 @@
 #include <unordered_map>
 
 using namespace std;
-using namespace stdext;
+// using namespace stdext left out: MSVC-only namespace
 
 // must use forward reference here to avoid circular dependencies
 class Area;

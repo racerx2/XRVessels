@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "orbitersdk.h"
+#include "Orbitersdk.h"
 #include "XR1Ramjet.h"
 #include "resource.h"
 #include "InstrumentPanel.h"
@@ -42,7 +42,7 @@
 #include "UMmuSDK.h"
 #endif
 
-#include <atlstr.h>
+#include <string>    // atlstr.h left out: std::string stands in for CString
 
 // Forward references
 class MultiDisplayArea;
@@ -146,7 +146,7 @@ public:
     virtual void clbkDockEvent(int dock, OBJHANDLE mate);
     
     virtual bool clbkLoadVC(int id);
-    virtual void UpdateCtrlDialog (DeltaGliderXR1 *dg, HWND hWnd = nullptr);
+    virtual void UpdateCtrlDialog (DeltaGliderXR1 *dg, QWidget *hWnd = nullptr);
 
     // remaining callback methods are implemented by our base class, VESSEL3_EXT
 
@@ -900,7 +900,7 @@ public:
         return retVal;
     }
 
-    static void FormatDouble(const double val, CString &out, const int decimalPlaces);
+    static void FormatDouble(const double val, std::string &out, const int decimalPlaces);
     void TriggerNavButtonRedraw();
     void FatalError(const char *pMsg);   // show error message box and terminate
     double GetThrusterFlowRate(const THRUSTER_HANDLE th) const;
@@ -1038,7 +1038,7 @@ public:
     XRPayloadBay *m_pPayloadBay;
     double m_nextPayloadScreensRefresh[3];  // simt of next refresh for our three screens
     vector<const XRGrappleTargetVessel *> m_xrGrappleTargetVesselsInDisplayRange;   // list of XRGrappleTargetVessel objects; may be empty
-    static HWND s_hPayloadEditorDialog;     // if non-zero, contains the window handle of the payload editor dialog; this is GLOBAL across all Ravenstar vessels since the dialog is a singleton
+    static QWidget *s_hPayloadEditorDialog;     // if non-zero, contains the window handle of the payload editor dialog; this is GLOBAL across all Ravenstar vessels since the dialog is a singleton
     // subclass bay doors, if any; these are not referenced by our class here
     UINT anim_bay;
     DoorStatus bay_status;

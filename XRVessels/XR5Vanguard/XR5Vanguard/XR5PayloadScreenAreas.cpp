@@ -159,7 +159,7 @@ bool SelectPayloadSlotArea::Redraw2D(const int event, const SURFHANDLE surf)
         {
             // compute the coordinates of this slot
             const COORD2 &slotGridCoordinates = pSlot->GetLevelGridCoordinates();   // 0,0 to n,n
-            COORD2 &slot = _COORD2(14, 98);  // upper-left corder of slot where line border starts for SLOT 1
+            COORD2 slot = _COORD2(14, 98);  // upper-left corder of slot where line border starts for SLOT 1  (MSVC leniency: value, not ref to temporary)
             slot += _COORD2((slotGridCoordinates.x * s_blockSize.x), -(slotGridCoordinates.y * s_blockSize.y));  // Y is negative
 
             // draw the line around the inside of the border

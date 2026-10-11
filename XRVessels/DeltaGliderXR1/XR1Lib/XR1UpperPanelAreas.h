@@ -30,7 +30,7 @@
 #pragma once
 
 #include "Orbitersdk.h"
-#include "vessel3ext.h"
+#include "Vessel3Ext.h"
 #include "Area.h"
 #include "XR1Areas.h"
 
@@ -204,8 +204,8 @@ public:
 
 protected:
     // data
-    HPEN m_pen0;
-    HPEN m_pen1;
+    QPen *m_pen0;
+    QPen *m_pen1;
 };
 
 //----------------------------------------------------------------------------------
@@ -269,8 +269,8 @@ public:
     virtual bool ProcessMouseEvent(const int event, const int mx, const int my);
 
 protected:
-    HFONT m_font;
-    HFONT m_numberFont;
+    QFont *m_font;
+    QFont *m_numberFont;
     COORD2 m_evaButtonCoord;
     COORD2 m_prevArrowCoord;
     COORD2 m_nextArrowCoord;

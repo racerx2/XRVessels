@@ -84,8 +84,8 @@ void DeltaGliderXR1::TestDamage()
     // airframe damage as a result of wingload stress
     // or excessive dynamic pressure
 
-    double load = GetLift() / WING_AREA; // L/S
-    double dynp = GetDynPressure();  // dynamic pressure
+    double load; load = GetLift() / WING_AREA; // L/S; split so goto exit crosses no initialization (MSVC allowed it)
+    double dynp; dynp = GetDynPressure();  // dynamic pressure; split so goto exit crosses no initialization
 
     if (GetXR1Config()->WingStressDamageEnabled && AllowDamageIfDockedCheck() && !Playback())
     {
@@ -203,7 +203,7 @@ void DeltaGliderXR1::TestDamage()
             // NOTE: do not integrate dt here; dt was already taken into account by CheckTemperature
             // pick a random engine and damage it based on alpha delta
             int engineIndex = ((oapiRand() < 0.5) ? 0 : 1);
-            const double engineFrac = max(0, (1.0 - alpha));
+            const double engineFrac = std::max<double>(0, (1.0 - alpha));  // windows.h max macro counterpart
             ramjet->SetEngineIntegrity(engineIndex, ramjet->GetEngineIntegrity(engineIndex) * engineFrac);
 
             // NOTE: SCRAM warning light already handled by CheckScramTemperature
@@ -294,7 +294,7 @@ bool DeltaGliderXR1::CheckHullHeatingDamage()
         // 40% over = 0.96 
         // 50% over = 1.25
         // NOTE: do not integrate dt here; dt was already taken into account by CheckTemperature
-        const double wingFrac = min(0, (1.0 - alpha));
+        const double wingFrac = std::min<double>(0, (1.0 - alpha));  // windows.h min macro counterpart
         lwingstatus *= wingFrac;
         m_warningLights[static_cast<int>(WarningLight::wlLwng)] = true;   // warning light ON
 
@@ -314,7 +314,7 @@ bool DeltaGliderXR1::CheckHullHeatingDamage()
     // This check assumes the retro doors are related to the wings
     if ((alpha = CheckTemperature(m_rightWingTemp, m_hullTemperatureLimits.wings, retroDoorsOpen)) != 0)
     {
-        const double wingFrac = min(0, (1.0 - alpha));
+        const double wingFrac = std::min<double>(0, (1.0 - alpha));  // windows.h min macro counterpart
         rwingstatus *= wingFrac;
         m_warningLights[static_cast<int>(WarningLight::wlRwng)] = true;   // warning light ON
 

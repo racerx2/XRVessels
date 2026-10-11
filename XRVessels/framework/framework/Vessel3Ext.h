@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include "windows.h"
+// windows.h left out: the SDK headers and the standard library declare what is used
 #include "XRVesselCtrl.h"
 #include "XRGrappleTargetVessel.h"
 #include "stringhasher.h"
@@ -35,6 +35,8 @@
 #include "RegKeyManager.h"
 
 #include <unordered_map>
+#include <chrono>     // not upstream: GetTickCount64 counterpart
+class QWindow;
 #include <vector>
 
 // redefine oapiGetSimTime as a compile-time error to prevent XR code from accidentally invoking it
@@ -45,7 +47,7 @@
 
 #define MAX_VELOCITY_FOR_WHEEL_STOP 0.04		  // max meters-per-second the ship can be moving and still be considered wheel-stop (used by IsLanded(); determines when parking brakes engage, for example).
 
-using namespace stdext;
+// using namespace stdext left out: MSVC-only namespace
 using namespace std;
 
 class Area;
@@ -84,14 +86,11 @@ public:
 	RegKeyManager m_regKeyManager;		// for global Orbiter-independent XR settings
 	
 	// Note: returns 0 if Orbiter is full-screen
-	static HWND GetOrbiterRenderWindowHandle()
-	{
-		return ::FindWindow("Orbiter Render Window", nullptr);
-	}
+	static QWindow *GetOrbiterRenderWindowHandle();   // FindWindow counterpart, in Vessel3Ext.cpp
 
-	HMODULE GetModuleHandle() { return m_hModule; }
+	void *GetModuleHandle() { return m_hModule; }
 
-    void SetModuleHandle(const HMODULE hModule) { m_hModule = hModule; }
+    void SetModuleHandle(void *const hModule) { m_hModule = hModule; }
     void AddInstrumentPanel(InstrumentPanel *pPanel, const int panelWidth);
     void AddPreStep(PrePostStep *pPostStep);
     void AddPostStep(PrePostStep *pPreStep);
@@ -143,7 +142,7 @@ public:
         // Even though we lose some precision going from 2^64 max down to 2^53 (53 bits mantissia in a double), that's still enough
         // precision to track 104,249,991.37 days, or 285,616 years of uptime right down to the millisecond.  
         // See https://stackoverflow.com/questions/1848700/biggest-integer-that-can-be-stored-in-a-double
-        const double uptimeMilli = static_cast<double>(GetTickCount64());  // GetTickCount64 requires Vista or higher, but that is our minimum target OS anyway
+        const double uptimeMilli = static_cast<double>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());  // GetTickCount64 counterpart  // GetTickCount64 requires Vista or higher, but that is our minimum target OS anyway
         return (uptimeMilli / 1000);  // convert to seconds
     }
     
@@ -226,7 +225,7 @@ private:
 	int m_videoWindowHeight;					 // in pixels; 0 = UNKNOWN (NOT PARSED YET)
     int m_lastVideoWindowWidth;                  // previous m_videoWindowWidth value; -1 = not set 
     int m_last2DPanelWidth;                      // 2D panel width for m_lastVideoWindowWidth; e.g., 1280, 1600, 1920
-    HMODULE m_hModule;
+    void *m_hModule;
     bool m_hasFocus;                             // true if we are in focus (i.e., we are the active ship), false if not
     unordered_map<int, InstrumentPanel *> m_panelMap; // map of all instrument panels: key = (panelWidth * 1000) + panel ID, value = InstrumentPanel *
     vector<PrePostStep *> m_postStepVector;      // list of PrePostStep objects; may be empty

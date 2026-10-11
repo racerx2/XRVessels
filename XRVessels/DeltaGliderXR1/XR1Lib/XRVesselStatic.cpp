@@ -24,6 +24,11 @@
 // ==============================================================
 
 #include "DeltaGliderXR1.h"
+#include "OrbiterResource.h"   // not upstream: DlgItem, oapiConnectDlgCommands
+#include <QAbstractButton>     // not upstream: BM_GETCHECK counterpart
+#include <cassert>
+#include <cstdio>
+#include <string>
 
 // Safely fill a screen area: if width or height == 0, do not render anything
 // Otherwise, oapiColourFill will (by design) render the entire area.
@@ -45,84 +50,83 @@ void DeltaGliderXR1::SafeBlt(SURFHANDLE tgt, SURFHANDLE src, int tgtx, int tgty,
 // Message callback function for control dialog box
 // ==============================================================
 
-INT_PTR CALLBACK XR1Ctrl_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void XR1Ctrl_DlgProc(QWidget *hWnd, void *context)   // DLGPROC -> DLGINIT
 {
-    DeltaGliderXR1* dg = (uMsg == WM_INITDIALOG ? reinterpret_cast<DeltaGliderXR1*>(lParam) : reinterpret_cast<DeltaGliderXR1*>(oapiGetDialogContext(hWnd)));
+    DeltaGliderXR1* dg = reinterpret_cast<DeltaGliderXR1*>(context);
     // pointer to vessel instance was passed as dialog context
 
-    switch (uMsg) {
-    case WM_INITDIALOG:
+    // WM_INITDIALOG
         dg->UpdateCtrlDialog(dg, hWnd);
-        return FALSE;
-    case WM_COMMAND:
-        switch (LOWORD(wParam)) {
+
+    // WM_COMMAND
+    oapiConnectDlgCommands(hWnd, [hWnd, dg](int id, int code, QWidget *hCtrl) {
+        switch (id) {
         case IDCANCEL:
             oapiCloseDialog(hWnd);
-            return TRUE;
+            return;
         case IDC_GEAR_UP:
             dg->ActivateLandingGear(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_GEAR_DOWN:
             dg->ActivateLandingGear(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_RETRO_CLOSE:
             dg->ActivateRCover(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_RETRO_OPEN:
             dg->ActivateRCover(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_NCONE_CLOSE:
             dg->ActivateNoseCone(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_NCONE_OPEN:
             dg->ActivateNoseCone(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_OLOCK_CLOSE:
             dg->ActivateOuterAirlock(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_OLOCK_OPEN:
             dg->ActivateOuterAirlock(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_ILOCK_CLOSE:
             dg->ActivateInnerAirlock(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_ILOCK_OPEN:
             dg->ActivateInnerAirlock(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_LADDER_RETRACT:
             dg->ActivateLadder(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_LADDER_EXTEND:
             dg->ActivateLadder(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_HATCH_CLOSE:
             dg->ActivateHatch(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_HATCH_OPEN:
             dg->ActivateHatch(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_RADIATOR_RETRACT:
             dg->ActivateRadiator(DoorStatus::DOOR_CLOSING);
-            return 0;
+            return;
         case IDC_RADIATOR_EXTEND:
             dg->ActivateRadiator(DoorStatus::DOOR_OPENING);
-            return 0;
+            return;
         case IDC_NAVLIGHT:
-            dg->SetNavlight(SendDlgItemMessage(hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            return 0;
+            dg->SetNavlight(DlgItem<QAbstractButton>(hWnd, IDC_NAVLIGHT)->isChecked());   // BM_GETCHECK counterpart
+            return;
         case IDC_BEACONLIGHT:
-            dg->SetBeacon(SendDlgItemMessage(hWnd, IDC_BEACONLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            return 0;
+            dg->SetBeacon(DlgItem<QAbstractButton>(hWnd, IDC_BEACONLIGHT)->isChecked());
+            return;
         case IDC_STROBELIGHT:
-            dg->SetStrobe(SendDlgItemMessage(hWnd, IDC_STROBELIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-            return 0;
+            dg->SetStrobe(DlgItem<QAbstractButton>(hWnd, IDC_STROBELIGHT)->isChecked());
+            return;
             //case IDC_DAMAGE:
             //	oapiOpenDialog (g_hDLL, IDD_DAMAGE, Damage_DlgProc, dg);
 
         }
-        break;
-    }
-    return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
+    });
+    // oapiDefDialogProc left out: oapiOpenDialogEx wires the default dialog behaviour
 }
 
 
@@ -177,7 +181,7 @@ void DeltaGliderXR1::HLiftCoeff(VESSEL* v, double beta, double M, double Re, voi
 }
 
 // static data
-HWND DeltaGliderXR1::s_hPayloadEditorDialog = 0;
+QWidget *DeltaGliderXR1::s_hPayloadEditorDialog = 0;
 
 // --------------------------------------------------------------
 // Convert spaces to a character that Orbiter can save
@@ -205,18 +209,18 @@ void DeltaGliderXR1::DecodeSpaces(char* pStr)
 
 // Format a double with commas to a given number of decimal places
 // e.g., "10,292.7"
-void DeltaGliderXR1::FormatDouble(const double val, CString& out, const int decimalPlaces)
+void DeltaGliderXR1::FormatDouble(const double val, std::string& out, const int decimalPlaces)
 {
-    CString format;
-    _ASSERTE(decimalPlaces >= 0);
-    format.Format("%%.%dlf", decimalPlaces);  // e.g., "%.2lf"
+    std::string format;
+    assert(decimalPlaces >= 0);  // _ASSERTE counterpart
+    char formatBuf[32]; snprintf(formatBuf, sizeof(formatBuf), "%%.%dlf", decimalPlaces); format = formatBuf;  // e.g., "%.2lf"; CString::Format counterpart
 
-    out.Format(format, val);   // "10292.7"
+    std::string outBuf(snprintf(nullptr, 0, format.c_str(), val) + 1, '\0'); snprintf(&outBuf[0], outBuf.size(), format.c_str(), val); out = outBuf.c_str();   // "10292.7"; CString::Format counterpart
 
     // now add in the commas; do not use a comma at three places for under 10,000
     int lowThreshold = ((val < 10000) ? 1 : 0);  //
-    for (int index = out.Find('.') - 3; index > lowThreshold; index -= 3)
-        out.Insert(index, ',');
+    for (int index = (out.find('.') == std::string::npos ? -1 : static_cast<int>(out.find('.'))) - 3; index > lowThreshold; index -= 3)  // CString::Find returns -1 when not found
+        out.insert(index, 1, ',');   // CString::Insert counterpart
 }
 
 // static worker method that returns a pointer to a static exhaust spec

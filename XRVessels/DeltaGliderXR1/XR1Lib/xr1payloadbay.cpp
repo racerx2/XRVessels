@@ -31,6 +31,7 @@
 #include "DeltaGliderXR1.h"
 #include "XR1PayloadBay.h"
 #include "XRPayloadBaySlot.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 //-------------------------------------------------------------------------
 // XR1PayloadBay methods
@@ -451,13 +452,13 @@ int DeltaGliderXR1::GrappleAllPayload()
         }
 
         // found the largest child to be grappled
-        _ASSERTE(indexWithLargestChild >= 0);
+        assert(indexWithLargestChild >= 0);  // _ASSERTE counterpart
         processedIndexes.push_back(indexWithLargestChild);  // remember this so we don't re-process it later
 
         // indexWithLargestChild now contains the child with the largest payload; try to grapple it into the 
         // first available slot.
         const XRGrappleTargetVessel *pGrappleTarget = m_xrGrappleTargetVesselsInDisplayRange[indexWithLargestChild];
-        _ASSERTE(pGrappleTarget != nullptr);
+        assert(pGrappleTarget != nullptr);  // _ASSERTE counterpart
 
         // check if vessel is in grappling range
         if (pGrappleTarget->GetDistance() <= GetPayloadGrappleRangeLimit())

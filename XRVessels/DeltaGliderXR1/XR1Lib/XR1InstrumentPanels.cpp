@@ -27,8 +27,9 @@
 // Instrument panels for the DG-XR1.
 // ==============================================================
 
-#include "OrbiterSDK.h"
+#include "Orbitersdk.h"
 #include "resource.h"
+#include "OrbiterResource.h"  // not upstream: oapiLoadResImage
 #include "AreaIDs.h"
 
 #include "XR1InstrumentPanels.h"
@@ -94,7 +95,7 @@ bool XR1MainInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
 
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
 
@@ -137,7 +138,7 @@ bool XR1UpperInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
 
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
     
@@ -164,7 +165,7 @@ bool XR1LowerInstrumentPanel::Activate()
     const WORD panelResourceID = GetPanelResourceID();
     
     // load our bitmap
-    m_hBmp = LoadBitmap(GetVessel().GetModuleHandle(), MAKEINTRESOURCE (panelResourceID));
+    m_hBmp = oapiLoadResImage(GetVessel().GetModuleHandle(), panelResourceID);  // LoadBitmap(MAKEINTRESOURCE) counterpart
     if (m_hBmp == nullptr)
         return false;       // should never happen
 

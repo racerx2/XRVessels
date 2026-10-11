@@ -21,6 +21,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1HUD.h"
+#include "XRGdi.h"  // not upstream: GDI calls on QPainter (windows.h before)
 
 // ==============================================================
 
@@ -135,7 +136,7 @@ void SecondaryHUDArea::SetHUDColors()
 // NOTE: the subclass MUST draw text from the supplied topY coordinate (plus some border gap space)
 // The X coordinate is zero @ the border
 // Returns: true if HUD was redrawn, false if not
-bool SecondaryHUDArea::DrawHUD(const int event, const int topY, HDC hDC, COLORREF colorRef, bool forceRender)
+bool SecondaryHUDArea::DrawHUD(const int event, const int topY, QPainter *hDC, COLORREF colorRef, bool forceRender)  // HDC counterpart
 {
     // NOTE: HUD may be off here if we are turning off!
     int mode = GetXR1().m_secondaryHUDMode;  // mode 1-5
@@ -148,7 +149,7 @@ bool SecondaryHUDArea::DrawHUD(const int event, const int topY, HDC hDC, COLORRE
     SecondaryHUDMode secondaryHUD = config.SecondaryHUD[mode - 1];   // 0 < mode < 5
 
     // set the font
-    HFONT prevFont = (HFONT)SelectObject(hDC, m_mainFont);   // save previous font and select new font
+    QFont *prevFont = (QFont *)SelectObject(hDC, m_mainFont);   // save previous font and select new font; HFONT counterpart
 
     // set the text fg and bg colors
     const COLORREF bgColor = secondaryHUD.GetBackgroundColor();
@@ -183,7 +184,7 @@ bool SecondaryHUDArea::DrawHUD(const int event, const int topY, HDC hDC, COLORRE
 
 // Render a single cell on the secondary HUD
 // row and column are NOT validated here; they were validated before
-void SecondaryHUDArea::RenderCell(HDC hDC, SecondaryHUDMode& secondaryHUD, const int row, const int column, const int topY)
+void SecondaryHUDArea::RenderCell(QPainter *hDC, SecondaryHUDMode& secondaryHUD, const int row, const int column, const int topY)  // HDC counterpart
 {
     SecondaryHUDMode::Cell& cell = secondaryHUD.GetCell(row, column);
     if (cell.pField == nullptr)

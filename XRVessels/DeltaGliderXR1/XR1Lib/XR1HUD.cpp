@@ -26,6 +26,7 @@
 
 #include "DeltaGliderXR1.h"
 #include "XR1HUD.h"
+#include <cassert>  // not upstream: assert for _ASSERTE
 
 // --------------------------------------------------------------
 // Respond to HUD mode change
@@ -268,9 +269,9 @@ bool DeltaGliderXR1::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketc
             {
                 char str[128];
                 // altitude
-                CString altitudeStr;
+                std::string altitudeStr;  // CString counterpart
                 FormatDouble(altitude, altitudeStr, 1);  // format with commas
-                sprintf(str, "%s meters", static_cast<const char *>(altitudeStr));   // e.g., "10,292.6 meters"
+                sprintf(str, "%s meters", altitudeStr.c_str());   // e.g., "10,292.6 meters"; CString cast counterpart
                 skp->Text(x, y, str, static_cast<int>(strlen(str)));
                 y += deltaY;  // next line down
 
@@ -297,7 +298,7 @@ bool DeltaGliderXR1::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketc
                     const bool baseFound = GetLandingTargetInfo(baseDistance, baseName, sizeof(baseName));
                     if (baseFound)
                     {
-                        CString distanceString;
+                        std::string distanceString;  // CString counterpart
                         int precision;
                         // show "meters" if we are < 10 km away
                         if (baseDistance < 10e3)
@@ -308,7 +309,7 @@ bool DeltaGliderXR1::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketc
                                 precision = 0;
 
                             FormatDouble(baseDistance, distanceString, precision);  // format with commas
-                            sprintf(str, "%s: %s meters", baseName, static_cast<const char *>(distanceString));
+                            sprintf(str, "%s: %s meters", baseName, distanceString.c_str());  // CString cast counterpart
                         }
                         else  // >= 10 km
                         {
@@ -320,7 +321,7 @@ bool DeltaGliderXR1::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketc
                                 precision = 0;  // "n km"
 
                             FormatDouble((baseDistance / 1000), distanceString, precision);  // format with commas
-                            sprintf(str, "%s: %s km", baseName, static_cast<const char *>(distanceString));
+                            sprintf(str, "%s: %s km", baseName, distanceString.c_str());  // CString cast counterpart
                         }
                     }
                     else  // no base found
@@ -514,7 +515,7 @@ void DeltaGliderXR1::RenderDataHUD(const HUDPAINTSPEC *hps, oapi::Sketchpad *skp
 oapi::Font *DeltaGliderXR1::GetNormal2DHUDFont()
 {
     // should not be called for VC modes
-    _ASSERTE(!IsCameraVC());
+    assert(!IsCameraVC());  // _ASSERTE counterpart
 
     if (m_pHudNormalFont == nullptr)  // not cached yet?
     {
