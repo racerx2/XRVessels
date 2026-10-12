@@ -1,3 +1,5 @@
+> **This is an unofficial Linux port of the XR vessels, maintained by racerx2. It is not made or supported by Doug Beachy. For help or bug reports, file an issue in this repository ([racerx2/XRVessels](https://github.com/racerx2/XRVessels/issues)) or contact racerx2. Please do not file issues in the official [dbeachy1/XRVessels](https://github.com/dbeachy1/XRVessels) repository or contact dbeachy1 for support.**
+
 # XR Vessels
 XR Series vessel add-ons for Orbiter Space Flight Simulator
 
