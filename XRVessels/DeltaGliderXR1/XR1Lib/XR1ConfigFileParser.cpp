@@ -139,7 +139,7 @@ bool XR1ConfigFileParser::ParseLine(const char *pSection, const char *pPropertyN
     {
         if (PNAME_MATCHES("2DPanelWidth"))
         {
-            SSCANF1("%d", &TwoDPanelWidth);
+            { int w = static_cast<int>(TwoDPanelWidth); SSCANF1("%d", &w); TwoDPanelWidth = static_cast<TWO_D_PANEL_WIDTH>(w); }   // not upstream: %d into an enum through an int
             VALIDATE_INT(reinterpret_cast<int *>(&TwoDPanelWidth), 0, 3, 0);  // OK to cast enum * to int * here
         }
     }
@@ -151,7 +151,7 @@ bool XR1ConfigFileParser::ParseLine(const char *pSection, const char *pPropertyN
         const int lastValidPassengerIndex = MAX_PASSENGERS - 1; 
         if ((passengerNumber < 0) || (passengerNumber > lastValidPassengerIndex))
         {
-            char msg[80];
+            char msg[96];   // not upstream: room for any int
             sprintf(msg, "Invalid PASSENGER section name: valid values are PASSENGER0 - PASSENGER%d", lastValidPassengerIndex);
             WriteLog(msg);
             return false;
@@ -548,7 +548,7 @@ bool XR1ConfigFileParser::ParseLine(const char *pSection, const char *pPropertyN
             char sideChar = pPropertyName[4];
             if (sideChar == 'L')
                 sideIndex = 0;
-            else if (sideChar = 'R')
+            else if (sideChar == 'R')   // not upstream: a comparison
                 sideIndex = 1;
             else
                 goto invalid_name;

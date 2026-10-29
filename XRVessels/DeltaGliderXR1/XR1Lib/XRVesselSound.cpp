@@ -32,7 +32,7 @@ bool DeltaGliderXR1::InitSound()
 {
 #if 0 // {XXX} ONLY SET THIS TO 1 IF YOU WANT TO TEST XRSOUND 2.0'S MODULE FUNCTIONALITY
 #ifndef _DEBUG 
-#error INVALID CONFIGURATION: fix your XRVessel.cpp's InitSound()
+#error "INVALID CONFIGURATION: fix your XRVessel.cpp's InitSound()"   // not upstream: quoted for the apostrophe
 #endif
     m_pXRSound = XRSound::CreateInstance("XRSoundModuleTesting");
 #else

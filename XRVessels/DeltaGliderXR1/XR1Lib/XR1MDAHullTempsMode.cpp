@@ -117,7 +117,7 @@ bool HullTempsMultiDisplayMode::Redraw2D(const int event, const SURFHANDLE surf)
     SetBkMode(hDC, TRANSPARENT);
     SetTextColor(hDC, CREF(LIGHT_BLUE));  // use CREF macro to convert to Windows' Blue, Green, Red COLORREF
     SetTextAlign(hDC, TA_LEFT);
-    char* pScale;
+    const char* pScale;   // not upstream: string literals
     if (GetXR1().m_activeTempScale == TempScale::Kelvin)
         pScale = "°K";
     else if (GetXR1().m_activeTempScale == TempScale::Celsius)

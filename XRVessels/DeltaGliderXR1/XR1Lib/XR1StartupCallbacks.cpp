@@ -135,7 +135,7 @@ void DeltaGliderXR1::clbkSetClassCaps(FILEHANDLE cfg)
 
     thg_main = CreateThrusterGroup(th_main, 2, THGROUP_MAIN);
     // increase thruster flame: stock was 12, 1
-    SURFHANDLE mainExhaustTex = oapiRegisterExhaustTexture("dg-xr1\\ExhaustXR1");
+    SURFHANDLE mainExhaustTex = oapiRegisterExhaustTexture(const_cast<char *>("dg-xr1\\ExhaustXR1"));   // not upstream: the SDK takes char * for the name
     // Pre-1.9 release: length was 12
     AddXRExhaust(th_main[0], 10, 0.811, mainExhaustTex);
     AddXRExhaust(th_main[1], 10, 0.811, mainExhaustTex);
@@ -543,9 +543,9 @@ void DeltaGliderXR1::clbkPostCreationCommonXRCode()
             CrewMember* pCM = GetXR1Config()->CrewMembers + i;
 
             // set miscID hash string: "XI0" ..."XIn" equates to : rank="Commander", mesh="dg-xr1\EVAM1"
+#ifdef MMU   // not upstream: misc only feeds UMmu
             char misc[5];   // size matches UMmu misc field size
             sprintf(misc, "XI%d", i);
-#ifdef MMU
             UMmu.AddCrewMember(pCM->name, pCM->age, pCM->pulse, pCM->mass, misc);
 #endif
         }

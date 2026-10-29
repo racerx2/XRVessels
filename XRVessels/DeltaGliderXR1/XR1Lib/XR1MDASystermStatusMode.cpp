@@ -73,7 +73,7 @@ bool SystemsStatusMultiDisplayMode::Redraw2D(const int event, const SURFHANDLE s
 
     static const int linesPerScreen = 7;
     DamageItem start = static_cast<DamageItem>(static_cast<int>(DamageItem::LeftWing) + (m_screenIndex * linesPerScreen));
-    char temp[64];
+    char temp[65];   // not upstream: a 63-character label and the colon
     for (int i = 0; i < linesPerScreen; i++)
     {
         DamageItem damageItem = static_cast<DamageItem>(static_cast<int>(start) + i);

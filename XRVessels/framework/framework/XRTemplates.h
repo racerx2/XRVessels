@@ -132,8 +132,8 @@ void EraseIteratorItemFirstSecond(MAP &map, ITERATOR &it)
     // WARNING: must erase the map entry *before* we free the *contents* of the hashmap object item (first & second).
     // Based on debugging, the hashmap code appears to allocate extra data in the it->first block, because if we free it 
     // *first*, we CTD inside the erase(it) call.
-    const void *pFirst = it->first;     // e.g., string *
-    const void *pSecond = it->second;   // e.g., XRGrappleTargetVessel *
+    const auto pFirst = it->first;  // e.g., string *; not upstream: the real types: deleting a void * runs no destructor
+    const auto pSecond = it->second;  // e.g., XRGrappleTargetVessel *; not upstream: the real types
     map.erase(it);
     delete pFirst;
     delete pSecond;

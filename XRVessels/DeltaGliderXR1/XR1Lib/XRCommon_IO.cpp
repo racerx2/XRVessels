@@ -44,15 +44,15 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
 
     IF_FOUND(NOSECONE_SCN)   // 'NOSECONE' or 'DOCKINGPORT'
     {
-        SSCANF2("%d%lf", &nose_status, &nose_proc);
+        SSCANF_ENUM_PROC(nose_status, nose_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("APU_STATUS") 
     {
-        SSCANF1("%d", &apu_status);  // no proc for this
+        SSCANF_ENUM(apu_status);  // no proc for this; not upstream: %d into an enum through an int
     } 
     else IF_FOUND("EXTCOOLING_STATUS") 
     {
-        SSCANF1("%d", &externalcooling_status);  // no proc for this
+        SSCANF_ENUM(externalcooling_status);  // no proc for this; not upstream: %d into an enum through an int
     } 
     else IF_FOUND("SECONDARY_HUD") 
     {
@@ -94,7 +94,7 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
     } 
     else IF_FOUND("CREW_STATE") 
     {
-        SSCANF1("%d", &m_crewState);
+        SSCANF_ENUM(m_crewState);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("COGSHIFT_MODES") 
     {
@@ -122,7 +122,7 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
     } 
     else IF_FOUND("CRASH_MSG") 
     {
-        SSCANF1("%s", &m_crashMessage);
+        SSCANF1("%511s", m_crashMessage);   // not upstream: the array, at most its 511 characters
         DecodeSpaces(m_crashMessage);   // Orbiter won't save or load spaces in params, so we work around it
     } 
     else IF_FOUND("ACTIVE_MDM") 
@@ -155,12 +155,12 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
     } 
     else IF_FOUND("TEMP_SCALE") 
     {
-        SSCANF1("%d", &m_activeTempScale);
+        SSCANF_ENUM(m_activeTempScale);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("CUSTOM_AUTOPILOT_MODE") 
     {
-        AUTOPILOT ap;
-        SSCANF1("%d", &ap);
+        AUTOPILOT ap = AUTOPILOT::AP_OFF;   // not upstream: a set value if the line has no number
+        SSCANF_ENUM(ap);   // not upstream: %d into an enum through an int
         // must set the autopilot mode via the method so that RCS thrust levels are set correctly
         SetCustomAutopilotMode(ap, false, true);  // do not play sound; FORCE setting regardless of current door status (doors will be set elsewhere during the load)
     } 
@@ -202,7 +202,7 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
     } 
     else IF_FOUND("GEAR") 
     {
-        SSCANF2("%d%lf", &gear_status, &gear_proc);
+        SSCANF_ENUM_PROC(gear_status, gear_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("OVERRIDE_INTERLOCKS") 
     {
@@ -210,43 +210,43 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
     } 
     else IF_FOUND("RCOVER") 
     {
-        SSCANF2("%d%lf", &rcover_status, &rcover_proc);
+        SSCANF_ENUM_PROC(rcover_status, rcover_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("AIRLOCK") 
     {
-        SSCANF2("%d%lf", &olock_status, &olock_proc);
+        SSCANF_ENUM_PROC(olock_status, olock_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("IAIRLOCK") 
     {
-        SSCANF2("%d%lf", &ilock_status, &ilock_proc);
+        SSCANF_ENUM_PROC(ilock_status, ilock_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("CHAMBER") 
     {
-        SSCANF2("%d%lf", &chamber_status, &chamber_proc);
+        SSCANF_ENUM_PROC(chamber_status, chamber_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("AIRBRAKE") 
     {
-        SSCANF2("%d%lf", &brake_status, &brake_proc);
+        SSCANF_ENUM_PROC(brake_status, brake_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("RADIATOR") 
     {
-        SSCANF2("%d%lf", &radiator_status, &radiator_proc);
+        SSCANF_ENUM_PROC(radiator_status, radiator_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("LADDER")     // not used by some subclasses, but we can parse it just the same because we have a status and a proc for it in the base XR1 class 
     {
-        SSCANF2("%d%lf", &ladder_status, &ladder_proc);
+        SSCANF_ENUM_PROC(ladder_status, ladder_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("SCRAM_DOORS") 
     {
-        SSCANF2("%d%lf", &scramdoor_status, &scramdoor_proc);
+        SSCANF_ENUM_PROC(scramdoor_status, scramdoor_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("HOVER_DOORS") 
     {
-        SSCANF2("%d%lf", &hoverdoor_status, &hoverdoor_proc);
+        SSCANF_ENUM_PROC(hoverdoor_status, hoverdoor_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("HATCH")    // not used by some subclasses, but we can parse it just the same because we have a status and a proc for it in the base XR1 class 
     {
-        SSCANF2("%d%lf", &hatch_status, &hatch_proc);
+        SSCANF_ENUM_PROC(hatch_status, hatch_proc);   // not upstream: %d into an enum through an int
     } 
     else IF_FOUND("SCRAM0DIR") 
     {
@@ -326,13 +326,13 @@ bool DeltaGliderXR1::ParseXRCommonScenarioLine(char *line)
     }
 	else IF_FOUND("PAYLOAD_BAY_DOORS")
 	{
-		SSCANF2("%d%lf", &bay_status, &bay_proc);
+		SSCANF_ENUM_PROC(bay_status, bay_proc);   // not upstream: %d into an enum through an int
 	}
     else IF_FOUND("GRAPPLE_TARGET")  // only applicable to payload-enabled vessels, but doesn't hurt to read it here
     {
         // Allocate space for grapple target vessel name; this is only necessary until the pilot selects another target vessel.
         // This memory is freed in the destructor.
-        SSCANF1("%s", m_grappleTargetVesselName);
+        SSCANF1("%127s", m_grappleTargetVesselName);   // not upstream: at most the array's 127 characters
     }
 	else IF_FOUND("PARKING_BRAKES")
 	{
@@ -518,40 +518,40 @@ void DeltaGliderXR1::WriteXRCommonScenarioLines(FILEHANDLE scn)
     oapiWriteScenario_int(scn, "CREW_DISPLAY_INDEX", m_crewDisplayIndex);
     
     // Write custom parameters
-    sprintf (cbuf, "%d %0.4f", gear_status, gear_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(gear_status), gear_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "GEAR", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", rcover_status, rcover_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(rcover_status), rcover_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "RCOVER", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", nose_status, nose_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(nose_status), nose_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, const_cast<char *>(NOSECONE_SCN), cbuf);  // 'NOSECONE' or 'DOCKINGPORT' (work around Orbiter bug with non-const param name)
 
-    sprintf (cbuf, "%d %0.4f", olock_status, olock_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(olock_status), olock_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "AIRLOCK", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", ilock_status, ilock_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(ilock_status), ilock_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "IAIRLOCK", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", chamber_status, chamber_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(chamber_status), chamber_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string(scn, "CHAMBER", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", brake_status, brake_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(brake_status), brake_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "AIRBRAKE", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", radiator_status, radiator_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(radiator_status), radiator_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "RADIATOR", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", ladder_status, ladder_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(ladder_status), ladder_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "LADDER", cbuf);
 
-    sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
+    sprintf (cbuf, "%d %0.4lf", static_cast<int>(hatch_status), hatch_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "HATCH", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", scramdoor_status, scramdoor_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(scramdoor_status), scramdoor_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "SCRAM_DOORS", cbuf);
 
-    sprintf (cbuf, "%d %0.4f", hoverdoor_status, hoverdoor_proc);
+    sprintf (cbuf, "%d %0.4f", static_cast<int>(hoverdoor_status), hoverdoor_proc);   // not upstream: %d takes an int
     oapiWriteScenario_string (scn, "HOVER_DOORS", cbuf);
 
     oapiWriteScenario_int(scn, "APU_STATUS", static_cast<int>(apu_status));  // no proc for this
@@ -605,7 +605,7 @@ void DeltaGliderXR1::WriteXRCommonScenarioLines(FILEHANDLE scn)
         if (*m_grappleTargetVesselName != 0)   // anything selected?
             oapiWriteScenario_string (scn, "GRAPPLE_TARGET", const_cast<char *>(m_grappleTargetVesselName));  // must cast away constness due to Orbiter API bug
 
-		sprintf(cbuf, "%d %0.4f", bay_status, bay_proc);
+		sprintf(cbuf, "%d %0.4f", static_cast<int>(bay_status), bay_proc);   // not upstream: %d takes an int
 		oapiWriteScenario_string(scn, "PAYLOAD_BAY_DOORS", cbuf);
     }
 }

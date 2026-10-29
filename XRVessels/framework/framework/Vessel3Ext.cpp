@@ -25,7 +25,7 @@
 // Defines and extended VESSEL3 class for use with the new XR cockpit framework.
 // ==============================================================
 
-#pragma once
+// not upstream: no #pragma once in a source file
 
 #include "Orbitersdk.h"
 #include "Vessel3Ext.h"

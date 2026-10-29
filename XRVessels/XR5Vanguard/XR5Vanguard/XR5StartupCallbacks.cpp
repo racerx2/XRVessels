@@ -185,7 +185,7 @@ void XR5Vanguard::clbkSetClassCaps(FILEHANDLE cfg)
     th_main[1] = CreateThruster(_V(3.59, 0, mainEngineZ), _V(0, 0, 1), MAX_MAIN_THRUST[GetXR1Config()->MainEngineThrust], ph_main, mainISP, mainISP * ispscale);
 
     thg_main = CreateThrusterGroup(th_main, 2, THGROUP_MAIN);
-    SURFHANDLE mainExhaustTex = oapiRegisterExhaustTexture("XR5Vanguard\\ExhaustXR5Vanguard");
+    SURFHANDLE mainExhaustTex = oapiRegisterExhaustTexture(const_cast<char *>("XR5Vanguard\\ExhaustXR5Vanguard"));   // not upstream: the SDK takes char * for the name
     // 1.0 ORG: const double mainLscale = 33;
     // PRE-1.7 (XR1 1.9 group) VERSIONS: const double mainLscale = 29;
     const double mainLscale = 20;

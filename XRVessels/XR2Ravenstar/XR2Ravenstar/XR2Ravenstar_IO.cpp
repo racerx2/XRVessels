@@ -54,7 +54,7 @@ void XR2Ravenstar::clbkLoadStateEx(FILEHANDLE scn, void *vs)
         // parse vessel-specific fields
         IF_FOUND("SKIN") 
         {
-            SSCANF1("%s", skinpath);
+            SSCANF1("%200s", skinpath);   // not upstream: bounded, so fname below holds it
             char fname[256];
             strcpy (fname, "XR2Ravenstar\\Skins\\");
             strcat (fname, skinpath);

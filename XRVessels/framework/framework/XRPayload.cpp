@@ -181,15 +181,15 @@ XRPayloadClassData::XRPayloadClassData(const char *pConfigFilespec, const char *
     FILEHANDLE hConfigFile = oapiOpenFile(m_pConfigFilespec, FILE_IN, CONFIG);  // filespec is CONFIG-relative here
     if (hConfigFile != nullptr)  // Note: this will always be true with the current Orbiter version; this is here in case the core bug is fixed in the future
     {
-        oapiReadItem_bool  (hConfigFile, "XRPayloadEnabled", m_isXRPayloadEnabled);
+        oapiReadItem_bool  (hConfigFile, const_cast<char *>("XRPayloadEnabled"), m_isXRPayloadEnabled);   // not upstream: the SDK takes char * for the item name
         oapiReadItem_string(hConfigFile, "Description", m_pDescription);
-        oapiReadItem_vec   (hConfigFile, "Dimensions", m_dimensions);
+        oapiReadItem_vec   (hConfigFile, const_cast<char *>("Dimensions"), m_dimensions);   // not upstream: the SDK takes char * for the item name
         oapiReadItem_float (hConfigFile, "Mass", m_mass);
         // NOTE: no longer used: oapiReadItem_int   (hConfigFile, "AttachmentPointIndex", m_attachmentPointIndex);
-        oapiReadItem_bool  (hConfigFile, "XRConsumableTank", m_isXRConsumableTank);
-        oapiReadItem_vec   (hConfigFile, "PrimarySlotCenterOfMassOffset", m_primarySlotCenterOfMassOffset);
+        oapiReadItem_bool  (hConfigFile, const_cast<char *>("XRConsumableTank"), m_isXRConsumableTank);   // not upstream: the SDK takes char * for the item name
+        oapiReadItem_vec   (hConfigFile, const_cast<char *>("PrimarySlotCenterOfMassOffset"), m_primarySlotCenterOfMassOffset);   // not upstream: the SDK takes char * for the item name
         oapiReadItem_string(hConfigFile, "ThumbnailPath", pThumbnailPath);
-        oapiReadItem_vec   (hConfigFile, "GroundDeploymentAdjustment", m_groundDeploymentAdjustment);
+        oapiReadItem_vec   (hConfigFile, const_cast<char *>("GroundDeploymentAdjustment"), m_groundDeploymentAdjustment);   // not upstream: the SDK takes char * for the item name
 
         // explicit attachment points
         static char vesselsWithExplicitAttachmentSlotsDefined[2048];  // static for efficiency
@@ -221,7 +221,7 @@ XRPayloadClassData::XRPayloadClassData(const char *pConfigFilespec, const char *
 
                 // retrieve the 'ExplicitAttachmentSlots' string of numbers for this vessel
                 static char explicitAttachmentSlotsStr[1024];  // static for efficiency
-                char prefName[512];
+                char prefName[sizeof(vesselsWithExplicitAttachmentSlotsDefined) + 24];   // not upstream: any class name and "_ExplicitAttachmentSlots"
                 sprintf(prefName, "%s_ExplicitAttachmentSlots", pVesselClassname);    // e.g., "XR5Vanguard_ExplicitAttachmentSlots"
                 if (oapiReadItem_string(hConfigFile, prefName, explicitAttachmentSlotsStr))
                 {
@@ -257,7 +257,7 @@ XRPayloadClassData::XRPayloadClassData(const char *pConfigFilespec, const char *
     // load the thumbnail and save a handle to it
     // Note: our default path here is the Orbiter root directory: i.e., the directory from which
     // Orbiter.exe is running.
-    static char pFullThumbnailPath[1024];    
+    static char pFullThumbnailPath[sizeof(pThumbnailPath) + 7];   // not upstream: "Config\" and the whole path
     sprintf(pFullThumbnailPath, "Config\\%s", pThumbnailPath);
     QImage thumbnailImage(QString::fromStdString(oapiResolvePath(pFullThumbnailPath)));   // LoadImage(LR_LOADFROMFILE) counterpart
     m_hThumbnailBitmap = (thumbnailImage.isNull() ? nullptr : new QImage(thumbnailImage.scaled(PAYLOAD_THUMBNAIL_DIMX, PAYLOAD_THUMBNAIL_DIMY)));  // will be null if load failed

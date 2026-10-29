@@ -260,7 +260,7 @@ void DeltaGliderXR1::SetDamageStatus(DamageItem item, double fracIntegrity)
         break;
 
     default:        // should never happen!
-        sprintf(oapiDebugString(), "WARNING: invalid damage ID in scenario file: %d", item);
+        sprintf(oapiDebugString(), "WARNING: invalid damage ID in scenario file: %d", static_cast<int>(item));   // not upstream: %d takes an int
         break;
     }
 

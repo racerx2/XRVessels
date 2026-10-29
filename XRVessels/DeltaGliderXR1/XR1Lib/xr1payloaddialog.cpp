@@ -28,7 +28,7 @@
 // by the XR1: it for subclasses to use.
 // ==============================================================
 
-#pragma once
+// not upstream: no #pragma once in a source file
 
 #include "DeltaGliderXR1.h"
 #include "XR1PayloadDialog.h"

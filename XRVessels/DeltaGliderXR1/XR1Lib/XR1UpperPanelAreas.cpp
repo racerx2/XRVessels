@@ -574,7 +574,7 @@ bool CrewDisplayArea::Redraw2D(const int event, const SURFHANDLE surf)
     //  name (age) 
     //  rank
     const int maxNameLineLength = CrewMemberNameLength + 2 + 3;   // includes 2 bytes for age + 3 extra bytes for " ()", excludes terminator
-    char temp[maxNameLineLength+1]; // allow room for terminator
+    char temp[maxNameLineLength+2];  // allow room for terminator; not upstream: and a third age digit (pAge holds 3)
     const int fontPitch = 14;       // includes space between lines
     const int xCoord = 2;
     int yCoord = 2;

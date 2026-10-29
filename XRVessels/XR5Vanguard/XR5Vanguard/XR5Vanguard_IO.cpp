@@ -54,7 +54,7 @@ void XR5Vanguard::clbkLoadStateEx(FILEHANDLE scn, void *vs)
         // parse vessel-specific fields
         IF_FOUND("SKIN") 
         {
-            SSCANF1("%s", skinpath);
+            SSCANF1("%200s", skinpath);   // not upstream: bounded, so fname below holds it
             char fname[256];
             strcpy (fname, "XR5Vanguard\\Skins\\");
             strcat (fname, skinpath);
@@ -68,11 +68,11 @@ void XR5Vanguard::clbkLoadStateEx(FILEHANDLE scn, void *vs)
         }
         else IF_FOUND("ACTIVE_EVA_PORT") 
         {
-            SSCANF1("%d", &m_activeEVAPort);
+            SSCANF_ENUM(m_activeEVAPort);   // not upstream: %d into an enum through an int
         }
 		else IF_FOUND("CREW_ELEVATOR")
 		{
-			SSCANF2("%d%lf", &crewElevator_status, &crewElevator_proc);
+			SSCANF_ENUM_PROC(crewElevator_status, crewElevator_proc);   // not upstream: %d into an enum through an int
 		}
         else
         {
@@ -97,6 +97,6 @@ void XR5Vanguard::clbkSaveState (FILEHANDLE scn)
 	char cbuf[256];
     oapiWriteScenario_int(scn, "RCS_DOCKING_MODE", m_rcsDockingMode);
     oapiWriteScenario_int(scn, "ACTIVE_EVA_PORT", static_cast<int>(m_activeEVAPort));
-	sprintf(cbuf, "%d %0.4f", crewElevator_status, crewElevator_proc);
+	sprintf(cbuf, "%d %0.4f", static_cast<int>(crewElevator_status), crewElevator_proc);   // not upstream: %d takes an int
 	oapiWriteScenario_string(scn, "CREW_ELEVATOR", cbuf);
 }

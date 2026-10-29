@@ -446,7 +446,7 @@ bool MassNumberArea::UpdateRenderData(RENDERDATA& renderData)
             mass = 0;
 
         // Note: pFormatString must be exactly nine characters in length, with exactly one decimal.
-        char* pFormatString;
+        const char* pFormatString;   // not upstream: string literals
         if (mass > 9999999.9)
             pFormatString = "%8.0lf.";  // eight because of "." appended = nine total
         else if (mass > 999999.9)

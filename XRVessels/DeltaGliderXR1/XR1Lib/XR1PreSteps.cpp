@@ -276,7 +276,7 @@ void ParkingBrakePreStep::clbkPrePostStep(const double simt, const double simdt,
 					char planetName[256];
 					oapiGetObjectName(GetXR1().GetSurfaceRef(), planetName, sizeof(planetName));  // "Earth", "Mars", etc.
 					
-					char landedStr[256];
+					char landedStr[sizeof(planetName) + 7];   // not upstream: "Landed " and the whole name
 					sprintf(landedStr, "Landed %s", planetName);  // "Landed Earth"
 					
 					const char *pVesselNameInScenario = GetXR1().GetName();	// "XR2-01", etc.
@@ -289,7 +289,7 @@ void ParkingBrakePreStep::clbkPrePostStep(const double simt, const double simdt,
 					oapiWriteScenario_float(fh, "HEADING", status.surf_hdg * DEG);
 
 					char gearParams[256];   
-					sprintf(gearParams, "%d %f", GetXR1().gear_status, GetXR1().gear_proc);   // must write out the landing gear status, too, or the Orbiter core will raise the landing gear on calling scenario load
+					sprintf(gearParams, "%d %f", static_cast<int>(GetXR1().gear_status), GetXR1().gear_proc);  // must write out the landing gear status, too, or the Orbiter core will raise the landing gear on calling scenario load; not upstream: %d takes an int
 					oapiWriteScenario_string(fh, "GEAR", gearParams);
 
 					char position[256];

@@ -66,3 +66,5 @@
 #define SSCANF_BOOL2(var1,var2) bFound = true; { int temp[2]; temp[0] = temp[1] = 0; SSCANF2("%d %d", temp, temp+1); var1 = (temp[0] != 0); var2 = (temp[1] != 0); }
 #define SSCANF_BOOL3(var1,var2,var3) bFound = true; { int temp[3]; temp[0] = temp[1] = temp[2] = 0; SSCANF3("%d %d %d", temp, temp+1, temp+2); var1 = (temp[0] != 0); var2 = (temp[1] != 0); var3 = (temp[2] != 0); }
 #define SSCANF_BOOL6(var1,var2,var3,var4,var5,var6) bFound = true; { int temp[6]; memset(temp, 0, sizeof(temp)); SSCANF6("%d%d%d%d%d%d", temp, temp+1, temp+2, temp+3, temp+4, temp+5); var1 = (temp[0] != 0); var2 = (temp[1] != 0); var3 = (temp[2] != 0); var4 = (temp[3] != 0); var5 = (temp[4] != 0); var6 = (temp[5] != 0);}
+#define SSCANF_ENUM(var) bFound = true; { int temp = static_cast<int>(var); SSCANF1("%d", &temp); var = static_cast<decltype(var)>(temp); }  // not upstream: %d reads an int, not an enum
+#define SSCANF_ENUM_PROC(var, proc) bFound = true; { int temp = static_cast<int>(var); SSCANF2("%d%lf", &temp, &proc); var = static_cast<decltype(var)>(temp); }  // not upstream: SSCANF_ENUM and the proc

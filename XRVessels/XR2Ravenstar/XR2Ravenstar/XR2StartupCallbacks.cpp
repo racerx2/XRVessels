@@ -294,7 +294,7 @@ void XR2Ravenstar::clbkSetClassCaps(FILEHANDLE cfg)
 
     thg_main = CreateThrusterGroup(th_main, 2, THGROUP_MAIN);
     // increase thruster flame: stock was 12, 1
-    SURFHANDLE mainExhaustTex = oapiRegisterExhaustTexture("XR2Ravenstar\\ExhaustXR2");
+    SURFHANDLE mainExhaustTex = oapiRegisterExhaustTexture(const_cast<char *>("XR2Ravenstar\\ExhaustXR2"));   // not upstream: the SDK takes char * for the name
 
     // XR1 org was 12 long, 0.811 wide
     // BETA-1 ORG: const double mainLscale = 14;
@@ -347,7 +347,7 @@ void XR2Ravenstar::clbkSetClassCaps(FILEHANDLE cfg)
     // BETA-1 ORG: const double retroWscale = 0.20;   // 0.431 as measured, but way too wide!  Is this actually radius???
     const double retroWscale = 0.2155;   // 0.431 is *radius*
 
-    SURFHANDLE retroExhaustTex = oapiRegisterExhaustTexture("XR2Ravenstar\\ExhaustXR2-rcs");  // orange texture for this
+    SURFHANDLE retroExhaustTex = oapiRegisterExhaustTexture(const_cast<char *>("XR2Ravenstar\\ExhaustXR2-rcs"));  // orange texture for this; not upstream: the SDK takes char * for the name
 #define ADD_RETRO_EXHAUST(th, x) \
     AddXRExhaust (th, retroLscale, retroWscale, _V(x, 0.461, retroZCoord), _V(0,0,1), retroExhaustTex)
     /* NO: AddExhaustStream (th, _V(x, 0, retroZCoord + 0.3), &exhaust_retro) */
