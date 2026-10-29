@@ -90,13 +90,15 @@ Happy Orbiting!
 
 ## Linux port (not upstream)
 
-Port version **2.0-linux-1.0**: Doug Beachy's version 2.0 as the base, plus the port's own `-linux-1.x` suffix (the next fix is 2.0-linux-1.1). The base stays 2.0 until an official upstream release changes it.
+Port version **2.0-linux-1.1**: Doug Beachy's version 2.0 as the base, plus the port's own `-linux-1.x` suffix (the next fix is 2.0-linux-1.2). The base stays 2.0 until an official upstream release changes it.
 
 Native Linux build of the XR1, XR2 and XR5 for the Linux/Vulkan edition of Orbiter (github.com/racerx2/orbiter-2027-linux). Ported from this repository at c69365b (version 2.0) by racerx2, 2026, under the GPLv3 like the original. The XR3 Phoenix and XRVesselCtrlDemo are not built.
 
-What changed: only the Windows-specific lines, each marked with a one-line comment. Windows GDI drawing goes through `framework/framework/XRGdi.h` (GDI counterparts on QPainter), Win32 dialogs and scenario-editor pages are Qt dialogs built from the same .rc templates, the registry is `Config/XRGlobalSettings.ini`, and ATL `CString` is `std::string`.
+What changed: only the Windows-specific lines and the fixes found by the Linux builds and tests, each marked with a one-line comment. Windows GDI drawing goes through `framework/framework/XRGdi.h` (GDI counterparts on QPainter), Win32 dialogs and scenario-editor pages are Qt dialogs built from the same .rc templates, the registry is `Config/XRGlobalSettings.ini`, and ATL `CString` is `std::string`.
 
-Build and install into an Orbiter folder (needs CMake, Ninja, GCC 15, Qt 6):
+The release zips are built and checked like the Orbiter 2027 Linux release, on AlmaLinux 9 with GCC 14 and Qt 6.8 against a release's SDK (`packaging/linux/xr.sh`, see `packaging/linux/README.md`), so they load in that Orbiter release on every distribution it runs on. 2.0-linux-1.1 needs Orbiter 2027 RC11 or newer.
+
+Build and install into an Orbiter folder (needs CMake, Ninja, GCC 14 or newer, Qt 6.5 or newer):
 
     cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake
     cmake --build out/build

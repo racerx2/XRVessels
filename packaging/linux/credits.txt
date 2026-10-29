@@ -1,0 +1,14 @@
+
+Credits (from the XR Flight Operations Manual, which has the full credits and licence notices):
+  XR vessels (all):  Douglas Beachy - concept, systems design, C++ code, 2D graphics, dialogs, documentation
+  DG-XR1:            Don Gallagher - 3D mesh tweaks, hover doors, SCRAM doors; based on the DeltaGlider-S mesh and
+                     virtual cockpit by Frying Tiger and on Martin Schweiger's DeltaGlider sample vessel (MIT licence)
+  XR5 Vanguard:      Russell Hicks - 3D modeling, internal cockpit textures, model design, cargo module models, some animation code
+                     PennyBlack - ship textures; Carmen A - fuel, LOX and H2O cargo modules; Tom Fisher - AIA cargo module;
+                     Don Gallagher - early prototype meshes
+  XR2 Ravenstar:     Steve "Coolhand" Tyler - concept, model design, 3D modeling, textures, cargo module models, Lee and Kara
+                     astronaut models, turbopack models, custom main/hover/RCS/SCRAM sound effects
+  Voice callouts:    Sally Beaumont (all vessels)
+  Astronaut meshes:  Greg Burch
+  Orbiter:           Dr. Martin Schweiger
+  Linux port:        racerx2

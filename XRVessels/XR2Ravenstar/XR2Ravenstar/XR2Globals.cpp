@@ -38,7 +38,7 @@ const char *VESSELNAME = "XR2Ravenstar";
 
 // VERSION ID
 // {XXX} UPDATE THIS FOR THE CURRENT BUILD VERSION; DO NOT REMOVE THIS {XXX} COMMENT
-const char* VERSION = "Version 2.0-linux-1.0 [" ARCH_TYPE  " " BUILD_TYPE "], Build Date : " __DATE__;   // not upstream: Doug's 2.0 plus the port's own "-linux-1.x" version
+const char* VERSION = "Version 2.0-linux-1.1 [" ARCH_TYPE  " " BUILD_TYPE "], Build Date : " __DATE__;   // not upstream: Doug's 2.0 plus the port's own "-linux-1.x" version
 
 // file is always written to the Orbiter directory
 const char *XR_LOG_FILE = "XR2Ravenstar.log";

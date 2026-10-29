@@ -1,0 +1,15 @@
+# XR releases for Linux (not upstream)
+
+The XR modules are built and checked the way the Orbiter 2027 Linux release is (Orbiter-linux-custom's `packaging/linux/rc.sh`): in the same AlmaLinux 9 folder (glibc 2.34) with GCC 14 (gcc-toolset-14) and Qt 6.8, against the SDK inside an Orbiter release package. So they load in that release on every distribution it runs on.
+
+    packaging/linux/xr.sh build [orbiter package]      # compiles as the release does (incremental)
+    packaging/linux/xr.sh package [orbiter package]    # clean build, checks, zips, flights
+    packaging/linux/xr.sh release [orbiter package]    # package if needed, push linux, publish v<version>
+
+- **The Orbiter package**: the argument (an `Orbiter2027-Linux-x86_64-rcN.tar.xz` with its `.sha256`, or an unpacked folder), else the newest rcN in `ORBITER_PORTABLE_DIR` (default Orbiter-linux-custom/out/portable), else the latest 2027-rc release, downloaded. It is unpacked into `out/release/orbiter`. A release needs a `.tar.xz`.
+- **The version** is the modules' VERSION string (XR1Globals.cpp, XR2Globals.cpp, XR5Globals.cpp); the three must agree.
+- `build.sh` runs inside the AlmaLinux folder (`ORBITER_RELEASE_ROOT`, as rc.sh): CMake, Ninja, Release; the three modules go to `out/release/stage/Modules` with RUNPATH `$ORIGIN/../lib:$ORIGIN/..`, as Orbiter's own modules. `package` stops on any compiler warning.
+- `check.py` checks each module against the package: glibc 2.34, GLIBCXX 3.4.29 and CXXABI 1.3.13 at most (Orbiter's baseline); every Qt version it needs is in the package's Qt; every library it needs is in the package, the C and C++ runtime or the package's `deps.list`; every Orbiter function it imports is exported by the package's Orbiter.
+- `pack.py` makes `out/release/<version>/`: `DeltaGliderXR1-<v>-x64.zip`, `XR5Vanguard-<v>-x64.zip` (the file lists of Doug's `dist/makedistXR1.bat` and `makedistXR5.bat`) and `XR2Ravenstar-<v>-so-x64.zip` (the module only), each with `Doc/<vessel>-Linux.txt` (`notice.txt`, `credits.txt`), the GPL and a `.sha256`. Every entry has the commit's time.
+- **Flights** (`package`): the zips are installed into a fresh copy of the Orbiter package with an empty home folder; no zip may replace a file of Orbiter's. The XR2 gets what Doug's XR2 package installs: its configs and scenarios from this repository, the mesh and textures from `XR2_DATA` (an Orbiter folder that has them; without it the XR2 is not flown). Two scenarios per vessel, 200 frames each, headless with XRSound, here and inside the AlmaLinux folder; then one Vulkan client flight per vessel (150 frames), skipped while Orbiter runs or with `XR_CLIENT=0`. Each flight must load its module at this version with XRSound, and its logs must have no error.
+- `release` pushes `linux` to racerx2/XRVessels (fast-forward only) and creates the pre-release `v<version>` with the zips and their `.sha256`, then compares GitHub's digests with ours. The notes come from `notes.md`; the changes go in `out/release/changes-<version>.md` (without it, the commit subjects since the previous release), the checks from the package run.

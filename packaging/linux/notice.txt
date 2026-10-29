@@ -1,0 +1,5 @@
+This is an unofficial Linux port of the XR vessels, maintained by racerx2. It is not made or supported by Doug Beachy.
+For help or bug reports, file an issue in this repository (racerx2/XRVessels) or contact racerx2. Please do not file
+issues in the official dbeachy1/XRVessels repository or contact dbeachy1 for support.
+Issues: https://github.com/racerx2/XRVessels/issues
+
