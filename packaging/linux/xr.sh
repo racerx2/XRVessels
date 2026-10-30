@@ -216,6 +216,7 @@ EOF
 		git fetch -q "https://github.com/$REPO.git" "refs/tags/$TAG"
 		[ "$(git rev-parse 'FETCH_HEAD^{tree}')" = "$(git rev-parse 'HEAD^{tree}')" ] || die "$TAG exists with other files"
 		gh release upload "$TAG" -R "$REPO" --clobber "$OUT/$V"/*.zip "$OUT/$V"/*.sha256
+		gh release edit "$TAG" -R "$REPO" --notes-file "$NOTES" > /dev/null # the zips name the commit: their sums and the notes follow it
 	else
 		gh release create "$TAG" -R "$REPO" --target "$C" --prerelease --title "XR Vessels $V (unofficial Linux port, x64)" \
 			--notes-file "$NOTES" "$OUT/$V"/*.zip "$OUT/$V"/*.sha256 > /dev/null
